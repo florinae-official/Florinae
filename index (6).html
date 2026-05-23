@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Florinae — Jewellery & Cosmetics</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#faf6f0;--warm:#f2ebe0;--gold:#c8a96e;--gold2:#e8cfa0;--dark:#1a1410;--brown:#4a3728;--muted:#8a7060;--border:#e0d5c5;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--dark);overflow-x:hidden;}
+
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.2rem 3rem;display:flex;align-items:center;justify-content:space-between;background:rgba(250,246,240,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+  .nav-logo{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--dark);text-decoration:none;}
+  .nav-links{display:flex;gap:2.5rem;list-style:none;}
+  .nav-links a{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+  .nav-links a:hover{color:var(--dark);}
+  .nav-cta{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:#fff;background:var(--dark);border:none;padding:10px 22px;border-radius:2px;cursor:pointer;text-decoration:none;transition:background 0.2s;}
+  .nav-cta:hover{background:var(--brown);}
+  .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
+  .hamburger span{width:22px;height:1px;background:var(--dark);display:block;}
+
+  /* HERO */
+  .hero{min-height:100vh;display:flex;align-items:center;padding-top:80px;background:linear-gradient(135deg,var(--cream) 0%,var(--warm) 100%);}
+  .hero-left{display:flex;flex-direction:column;justify-content:center;padding:5rem 6rem;max-width:700px;}
+  .hero-tag{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:1.5rem;display:flex;align-items:center;gap:10px;}
+  .hero-tag::before{content:'';width:30px;height:1px;background:var(--gold);}
+  .hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(52px,7vw,88px);font-weight:300;line-height:1.05;color:var(--dark);margin-bottom:1.5rem;}
+  .hero-title em{font-style:italic;color:var(--brown);}
+  .hero-desc{font-size:15px;font-weight:300;line-height:1.8;color:var(--muted);max-width:380px;margin-bottom:2.5rem;}
+  .hero-btns{display:flex;gap:1rem;align-items:center;}
+  .btn-primary{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:#fff;background:var(--dark);border:none;padding:14px 32px;border-radius:2px;cursor:pointer;text-decoration:none;transition:all 0.2s;}
+  .btn-primary:hover{background:var(--brown);transform:translateY(-1px);}
+  .btn-secondary{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:14px 0;border-bottom:1px solid transparent;transition:all 0.2s;}
+  .btn-secondary:hover{color:var(--dark);border-bottom-color:var(--dark);}
+  .hero-right{position:relative;overflow:hidden;background:var(--warm);}
+  .hero-img-grid{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3px;}
+  .hero-img-cell{background:var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:40px;opacity:0.15;}
+  .hero-img-cell:first-child{grid-row:span 2;}
+
+  .marquee-wrap{background:var(--dark);padding:14px 0;overflow:hidden;}
+  .marquee{display:flex;white-space:nowrap;animation:marquee 20s linear infinite;}
+  .marquee-item{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold2);padding:0 2.5rem;display:inline-flex;align-items:center;gap:2rem;}
+  .marquee-item::after{content:'✦';font-size:8px;opacity:0.6;}
+  @keyframes marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+  .section{padding:6rem;}
+  .section-tag{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;display:flex;align-items:center;gap:10px;}
+  .section-tag::before{content:'';width:24px;height:1px;background:var(--gold);}
+  .section-title{font-family:'Cormorant Garamond',serif;font-size:clamp(36px,5vw,56px);font-weight:300;line-height:1.1;color:var(--dark);margin-bottom:3rem;}
+
+  /* CATEGORIES */
+  .categories-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .cat-card{position:relative;overflow:hidden;border-radius:8px;cursor:pointer;display:flex;align-items:flex-end;transition:transform 0.3s,box-shadow 0.3s;height:220px;}
+  .cat-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(26,20,16,0.15);}
+  .cat-card:hover .cat-bg{transform:scale(1.06);}
+  .cat-bg{position:absolute;inset:0;transition:transform 0.5s;display:flex;align-items:center;justify-content:center;}
+  .cat-icon-large{font-size:72px;opacity:0.18;position:absolute;}
+
+  /* Category background designs */
+  .cat-jewellery .cat-bg{background:linear-gradient(135deg,#e8d5b8 0%,#c8a96e 50%,#8a6940 100%);}
+  .cat-beauty .cat-bg{background:linear-gradient(135deg,#f0d0d8 0%,#e0909a 50%,#c06070 100%);}
+  .cat-skincare .cat-bg{background:linear-gradient(135deg,#d0e8e0 0%,#90c8b0 50%,#508878 100%);}
+  .cat-accessories .cat-bg{background:linear-gradient(135deg,#ddd0f0 0%,#b090d8 50%,#806098 100%);}
+  .cat-bestseller .cat-bg{background:linear-gradient(135deg,#f0e8c8 0%,#d4a853 50%,#8a6820 100%);}
+
+  .cat-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(20,14,8,0.8) 0%,rgba(20,14,8,0.1) 60%,transparent 100%);}
+  .cat-info{position:relative;z-index:2;padding:1.4rem;}
+  .cat-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#fff;line-height:1.2;margin-bottom:6px;}
+  .cat-subs{display:flex;flex-wrap:wrap;gap:5px;}
+  .cat-sub-pill{font-size:9px;letter-spacing:1px;text-transform:uppercase;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);padding:3px 8px;border-radius:20px;backdrop-filter:blur(4px);}
+  .cat-arrow{position:absolute;top:1rem;right:1rem;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:13px;opacity:0;transition:opacity 0.2s;color:#fff;}
+  .cat-card:hover .cat-arrow{opacity:1;}
+
+  /* PRODUCTS */
+  .products-section{background:var(--warm);}
+  .products-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+
+  .filter-wrap{margin-bottom:2rem;}
+  .filter-main-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .filter-sub-tabs{display:flex;gap:6px;flex-wrap:wrap;min-height:32px;transition:all 0.3s;}
+  .filter-tab{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;padding:8px 18px;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+  .filter-tab:hover{border-color:var(--dark);color:var(--dark);}
+  .filter-tab.active{background:var(--dark);color:#fff;border-color:var(--dark);}
+  .filter-sub-tab{font-family:'Jost',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+  .filter-sub-tab:hover{border-color:var(--brown);color:var(--brown);}
+  .filter-sub-tab.active{background:var(--brown);color:#fff;border-color:var(--brown);}
+
+  .products-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+  .product-card{background:var(--cream);border-radius:4px;overflow:hidden;transition:transform 0.3s,box-shadow 0.3s;cursor:pointer;}
+  .product-card:hover{transform:translateY(-5px);box-shadow:0 24px 48px rgba(26,20,16,0.12);}
+  .product-img{height:260px;background:linear-gradient(135deg,#ede5d8,#ddd0be);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+  .product-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;transition:transform 0.5s ease;}
+  .product-card:hover .product-img img{transform:scale(1.07);}
+  .product-img-icon{font-size:60px;opacity:0.15;}
+  .product-badge{position:absolute;top:12px;left:12px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;background:var(--dark);color:#fff;padding:4px 10px;border-radius:2px;z-index:2;}
+  .product-badge.new{background:var(--gold);color:var(--dark);}
+  .product-badge.sale{background:#c07070;color:#fff;}
+  .product-img-overlay{position:absolute;inset:0;background:rgba(26,20,16,0.45);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s;z-index:3;}
+  .product-card:hover .product-img-overlay{opacity:1;}
+  .overlay-btn{font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:#fff;background:rgba(255,255,255,0.15);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.4);padding:10px 20px;border-radius:2px;}
+  .product-info{padding:1.1rem;}
+  .product-category{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+  .product-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:400;color:var(--dark);margin-bottom:8px;line-height:1.3;}
+  .product-price{font-size:14px;font-weight:500;color:var(--brown);display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .product-price-old{font-size:12px;color:var(--muted);text-decoration:line-through;font-weight:300;}
+  .variant-dots{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+  .variant-dot{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform 0.15s,border-color 0.15s;flex-shrink:0;}
+  .variant-dot:hover{transform:scale(1.2);}
+  .variant-dot.active{border-color:var(--dark);}
+  .variant-label{font-size:10px;color:var(--muted);letter-spacing:1px;}
+  .product-btn{display:block;width:100%;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;text-align:center;color:#fff;background:var(--dark);border:1px solid var(--dark);padding:11px;border-radius:2px;cursor:pointer;text-decoration:none;transition:all 0.2s;}
+  .product-btn:hover{background:var(--brown);border-color:var(--brown);}
+  .products-empty{text-align:center;padding:3rem;color:var(--muted);font-size:14px;grid-column:1/-1;}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(26,20,16,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:2rem;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+  .modal-overlay.open{opacity:1;pointer-events:all;}
+  .modal{background:var(--cream);border-radius:8px;max-width:780px;width:100%;max-height:90vh;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;position:relative;}
+  .modal-img{height:100%;min-height:380px;background:linear-gradient(135deg,#ede5d8,#ddd0be);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+  .modal-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+  .modal-img-icon{font-size:80px;opacity:0.12;}
+  .modal-info{padding:2rem;display:flex;flex-direction:column;}
+  .modal-close{position:absolute;top:1rem;right:1rem;background:rgba(26,20,16,0.1);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;z-index:2;transition:background 0.2s;}
+  .modal-close:hover{background:rgba(26,20,16,0.2);}
+  .modal-category{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .modal-name{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--dark);margin-bottom:10px;line-height:1.2;}
+  .modal-price{font-size:18px;font-weight:500;color:var(--brown);margin-bottom:1.5rem;display:flex;align-items:center;gap:10px;}
+  .modal-price-old{font-size:14px;color:var(--muted);text-decoration:line-through;font-weight:300;}
+  .modal-section-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .modal-variants{display:flex;flex-direction:column;gap:8px;margin-bottom:1.5rem;}
+  .modal-variant-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all 0.2s;}
+  .modal-variant-row:hover{border-color:var(--dark);}
+  .modal-variant-row.selected{border-color:var(--dark);background:var(--warm);}
+  .modal-variant-swatch{width:24px;height:24px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,0.1);}
+  .modal-variant-name{font-size:13px;color:var(--dark);}
+  .modal-variant-price{font-size:12px;color:var(--muted);margin-left:auto;}
+  .modal-order-btn{display:block;width:100%;font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;text-align:center;color:#fff;background:var(--dark);border:none;padding:14px;border-radius:2px;cursor:pointer;text-decoration:none;transition:all 0.2s;margin-top:auto;}
+  .modal-order-btn:hover{background:var(--brown);}
+
+  .why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;}
+  .why-card{text-align:center;padding:2rem 1rem;}
+  .why-icon{font-size:28px;margin-bottom:1rem;display:block;}
+  .why-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--dark);margin-bottom:8px;}
+  .why-desc{font-size:13px;font-weight:300;line-height:1.7;color:var(--muted);}
+
+  .testimonials-section{background:var(--dark);}
+  .testimonials-section .section-tag{color:var(--gold2);}
+  .testimonials-section .section-tag::before{background:var(--gold2);}
+  .testimonials-section .section-title{color:var(--cream);}
+  .testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;}
+  .testimonial-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:2rem;}
+  .testimonial-stars{color:var(--gold);font-size:13px;margin-bottom:1rem;letter-spacing:2px;}
+  .testimonial-text{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;font-weight:300;color:rgba(250,246,240,0.85);line-height:1.7;margin-bottom:1.5rem;}
+  .testimonial-author{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold2);}
+
+  .cta-section{background:linear-gradient(135deg,var(--warm),var(--border));padding:6rem;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;}
+  .cta-title{font-family:'Cormorant Garamond',serif;font-size:clamp(36px,4vw,52px);font-weight:300;line-height:1.15;color:var(--dark);}
+  .cta-title em{font-style:italic;color:var(--brown);}
+  .cta-right{display:flex;flex-direction:column;gap:1.5rem;}
+  .cta-desc{font-size:15px;font-weight:300;line-height:1.8;color:var(--muted);}
+  .cta-btn{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:#fff;background:var(--dark);border:none;padding:16px 36px;border-radius:2px;cursor:pointer;text-decoration:none;display:inline-block;align-self:flex-start;transition:all 0.2s;}
+  .cta-btn:hover{background:var(--brown);transform:translateY(-1px);}
+
+  footer{background:var(--dark);padding:3rem 6rem 2rem;display:grid;grid-template-columns:2fr 1fr 1fr;gap:4rem;}
+  .footer-logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--cream);margin-bottom:1rem;display:block;}
+  .footer-desc{font-size:13px;font-weight:300;line-height:1.8;color:rgba(250,246,240,0.4);max-width:260px;}
+  .footer-col-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold2);margin-bottom:1.2rem;}
+  .footer-links{list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .footer-links a{font-size:13px;font-weight:300;color:rgba(250,246,240,0.4);text-decoration:none;transition:color 0.2s;}
+  .footer-links a:hover{color:var(--cream);}
+  .footer-bottom{background:var(--dark);padding:1.2rem 6rem;border-top:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;}
+  .footer-copy{font-size:11px;color:rgba(250,246,240,0.25);letter-spacing:1px;}
+  .footer-social{display:flex;gap:1.5rem;}
+  .footer-social a{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(250,246,240,0.35);text-decoration:none;transition:color 0.2s;}
+  .footer-social a:hover{color:var(--gold2);}
+
+  .fade-up{opacity:0;transform:translateY(24px);transition:opacity 0.6s ease,transform 0.6s ease;}
+  .fade-up.visible{opacity:1;transform:translateY(0);}
+
+  @media(max-width:768px){
+    nav{padding:1rem 1.5rem;}
+    .nav-links,.nav-cta{display:none;}
+    .hamburger{display:flex;}
+    .hero{grid-template-columns:1fr;min-height:auto;}
+    .hero-left{padding:3rem 1.5rem 2rem;}
+    .section{padding:3.5rem 1.5rem;}
+    .categories-grid{grid-template-columns:1fr 1fr;}
+    .cat-card{height:160px;}
+    .products-grid{grid-template-columns:1fr 1fr;}
+    .products-header{flex-direction:column;align-items:flex-start;}
+    .why-grid{grid-template-columns:1fr 1fr;}
+    .testimonials-grid{grid-template-columns:1fr;}
+    .cta-section{grid-template-columns:1fr;padding:3.5rem 1.5rem;gap:2rem;}
+    footer{grid-template-columns:1fr;gap:2rem;padding:3rem 1.5rem 2rem;}
+    .footer-bottom{padding:1.2rem 1.5rem;flex-direction:column;gap:1rem;text-align:center;}
+    .modal{grid-template-columns:1fr;}
+    .modal-img{min-height:260px;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">Florinae</a>
+  <ul class="nav-links">
+    <li><a href="#categories">Collection</a></li>
+    <li><a href="#products">Shop</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="https://www.facebook.com/florinae.official" target="_blank" class="nav-cta">Shop Now</a>
+  <button class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-tag">New Collection 2026</div>
+    <h1 class="hero-title">A Little<br><em>Luxury</em><br>For You</h1>
+    <p class="hero-desc">Curated jewellery and beauty for the woman who knows what she loves. Every piece tells a story — make it yours.</p>
+    <div class="hero-btns">
+      <a href="#products" class="btn-primary">Shop the Collection</a>
+      <a href="#categories" class="btn-secondary">Explore →</a>
+    </div>
+  </div>
+</section>
+
+<div class="marquee-wrap">
+  <div class="marquee">
+    <span class="marquee-item">Jewellery</span><span class="marquee-item">Beauty</span><span class="marquee-item">Florinae</span><span class="marquee-item">New Arrivals</span><span class="marquee-item">Fast Delivery</span><span class="marquee-item">Skincare</span><span class="marquee-item">Accessories</span><span class="marquee-item">Florinae</span><span class="marquee-item">Bestsellers</span><span class="marquee-item">Fast Delivery</span><span class="marquee-item">Jewellery</span><span class="marquee-item">Beauty</span><span class="marquee-item">Florinae</span><span class="marquee-item">New Arrivals</span><span class="marquee-item">Fast Delivery</span><span class="marquee-item">Skincare</span><span class="marquee-item">Accessories</span><span class="marquee-item">Florinae</span><span class="marquee-item">Bestsellers</span><span class="marquee-item">Fast Delivery</span>
+  </div>
+</div>
+
+<!-- CATEGORIES -->
+<section class="section" id="categories">
+  <div class="section-tag">Browse By Category</div>
+  <h2 class="section-title">Our Collections</h2>
+  <div class="categories-grid">
+
+    <div class="cat-card cat-bestseller fade-up" onclick="filterCategory('Bestseller')">
+      <div class="cat-bg"><span class="cat-icon-large">⭐</span></div>
+      <div class="cat-overlay"></div>
+      <div class="cat-arrow">→</div>
+      <div class="cat-info">
+        <div class="cat-name">Best Sellers</div>
+        <div class="cat-subs"><span class="cat-sub-pill">Top Picks</span><span class="cat-sub-pill">Most Loved</span></div>
+      </div>
+    </div>
+
+    <div class="cat-card cat-jewellery fade-up" onclick="filterCategory('Jewellery')">
+      <div class="cat-bg"><span class="cat-icon-large">💍</span></div>
+      <div class="cat-overlay"></div>
+      <div class="cat-arrow">→</div>
+      <div class="cat-info">
+        <div class="cat-name">Jewellery</div>
+        <div class="cat-subs">
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Jewellery','Bangles')">Bangles</span>
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Jewellery','Ring')">Ring</span>
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Jewellery','Earrings')">Earrings</span>
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Jewellery','Bracelets')">Bracelets</span>
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Jewellery','Handchains')">Handchains</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-card cat-beauty fade-up" onclick="filterCategory('Beauty')">
+      <div class="cat-bg"><span class="cat-icon-large">💄</span></div>
+      <div class="cat-overlay"></div>
+      <div class="cat-arrow">→</div>
+      <div class="cat-info">
+        <div class="cat-name">Beauty</div>
+        <div class="cat-subs">
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Beauty','Blush')">Blush</span>
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Beauty','Lip')">Lip</span>
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Beauty','Face')">Face</span>
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Beauty','Eyes')">Eyes</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-card cat-skincare fade-up" onclick="filterCategory('Skincare')">
+      <div class="cat-bg"><span class="cat-icon-large">✨</span></div>
+      <div class="cat-overlay"></div>
+      <div class="cat-arrow">→</div>
+      <div class="cat-info">
+        <div class="cat-name">Skincare</div>
+        <div class="cat-subs">
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Skincare','Mask')">Mask</span>
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Skincare','Pimple Patch')">Pimple Patch</span>
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Skincare','Eye Mask')">Eye Mask</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-card cat-accessories fade-up" onclick="filterCategory('Accessories')">
+      <div class="cat-bg"><span class="cat-icon-large">📿</span></div>
+      <div class="cat-overlay"></div>
+      <div class="cat-arrow">→</div>
+      <div class="cat-info">
+        <div class="cat-name">Accessories</div>
+        <div class="cat-subs">
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Accessories','Fake Nails')">Fake Nails</span>
+          <span class="cat-sub-pill" onclick="event.stopPropagation();filterSub('Accessories','Organizer')">Organizer</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PRODUCTS -->
+<section class="section products-section" id="products">
+  <div class="products-header">
+    <div>
+      <div class="section-tag">Handpicked For You</div>
+      <h2 class="section-title" style="margin-bottom:0">Shop Products</h2>
+    </div>
+    <a href="https://m.me/florinae.official" target="_blank" class="btn-secondary">Message Us →</a>
+  </div>
+
+  <div class="filter-wrap">
+    <div class="filter-main-tabs">
+      <button class="filter-tab active" onclick="filterCategory('All')">All</button>
+      <button class="filter-tab" onclick="filterCategory('Bestseller')">Best Sellers</button>
+      <button class="filter-tab" onclick="filterCategory('Jewellery')">Jewellery</button>
+      <button class="filter-tab" onclick="filterCategory('Beauty')">Beauty</button>
+      <button class="filter-tab" onclick="filterCategory('Skincare')">Skincare</button>
+      <button class="filter-tab" onclick="filterCategory('Accessories')">Accessories</button>
+    </div>
+    <div class="filter-sub-tabs" id="sub-tabs"></div>
+  </div>
+
+  <div class="products-grid" id="products-grid">
+    <div class="products-empty">Loading products...</div>
+  </div>
+</section>
+
+<!-- WHY US -->
+<section class="section" id="about">
+  <div class="section-tag">Why Florinae</div>
+  <h2 class="section-title">Crafted With Love</h2>
+  <div class="why-grid">
+    <div class="why-card fade-up"><span class="why-icon">🎁</span><div class="why-title">Gift Packaging</div><p class="why-desc">Every order comes beautifully packaged, ready to give or keep for yourself.</p></div>
+    <div class="why-card fade-up"><span class="why-icon">✅</span><div class="why-title">100% Authentic</div><p class="why-desc">We source only genuine, high-quality products you can trust on your skin.</p></div>
+    <div class="why-card fade-up"><span class="why-icon">🚚</span><div class="why-title">Fast Delivery</div><p class="why-desc">Quick and careful delivery straight to your doorstep across Bangladesh.</p></div>
+    <div class="why-card fade-up"><span class="why-icon">💬</span><div class="why-title">Personal Service</div><p class="why-desc">We're always here to help you find the perfect piece or product for you.</p></div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="section testimonials-section">
+  <div class="section-tag">Customer Love</div>
+  <h2 class="section-title">What They Say</h2>
+  <div class="testimonials-grid">
+    <div class="testimonial-card fade-up"><div class="testimonial-stars">★★★★★</div><p class="testimonial-text">"The necklace I ordered was even more beautiful in person. Packaging was so pretty, I didn't want to open it!"</p><div class="testimonial-author">— Sadia R., Dhaka</div></div>
+    <div class="testimonial-card fade-up"><div class="testimonial-stars">★★★★★</div><p class="testimonial-text">"Amazing quality lipstick. Lasts all day and the colour is exactly as shown. Will definitely order again!"</p><div class="testimonial-author">— Nusrat J., Chittagong</div></div>
+    <div class="testimonial-card fade-up"><div class="testimonial-stars">★★★★★</div><p class="testimonial-text">"Fast delivery and lovely products. Florinae is my go-to for gifts. Everyone loves what I give from here."</p><div class="testimonial-author">— Tania K., Sylhet</div></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <div><h2 class="cta-title">Ready to Find<br>Your <em>Perfect</em><br>Piece?</h2></div>
+  <div class="cta-right">
+    <p class="cta-desc">Message us on Facebook — we'll help you find exactly what you're looking for and place your order with ease.</p>
+    <a href="https://m.me/florinae.official" target="_blank" class="cta-btn">Message Us on Facebook →</a>
+  </div>
+</section>
+
+<footer>
+  <div><span class="footer-logo">Florinae</span><p class="footer-desc">Curated jewellery and beauty for every woman. Delivered with care across Bangladesh.</p></div>
+  <div>
+    <div class="footer-col-title">Quick Links</div>
+    <ul class="footer-links">
+      <li><a href="#categories">Collections</a></li>
+      <li><a href="#products">Shop</a></li>
+      <li><a href="#about">About Us</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </div>
+  <div>
+    <div class="footer-col-title">Follow Us</div>
+    <ul class="footer-links">
+      <li><a href="https://www.facebook.com/florinae.official" target="_blank">Facebook</a></li>
+      <li><a href="https://m.me/florinae.official" target="_blank">Messenger</a></li>
+      <li><a href="https://www.instagram.com/florinae.official?igsh=MXF2d292djR3Nzl4bg==" target="_blank">Instagram</a></li>
+    </ul>
+  </div>
+</footer>
+<div class="footer-bottom">
+  <span class="footer-copy">© 2026 Florinae. All rights reserved.</span>
+  <div class="footer-social">
+    <a href="https://www.facebook.com/florinae.official" target="_blank">Facebook</a>
+    <a href="https://www.instagram.com/florinae.official?igsh=MXF2d292djR3Nzl4bg==" target="_blank">Instagram</a>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    <div class="modal-img" id="modal-img"><span class="modal-img-icon" id="modal-img-icon">✨</span></div>
+    <div class="modal-info">
+      <div class="modal-category" id="modal-cat"></div>
+      <div class="modal-name" id="modal-name"></div>
+      <div class="modal-price" id="modal-price"></div>
+      <div id="modal-variants-wrap" style="display:none">
+        <div class="modal-section-label">Available Colors / Variants</div>
+        <div class="modal-variants" id="modal-variants"></div>
+      </div>
+      <a href="#" class="modal-order-btn" id="modal-order-btn" target="_blank">Order Now via Messenger</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://zogvgsahakzgmxtijhcj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_NoiER0HizjRVonZlIM9BKA_HrWtfPSI';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let allProducts = [];
+let activeCategory = 'All';
+let activeSubCategory = null;
+let currentProduct = null;
+let selectedVariant = null;
+
+const SUB_CATEGORIES = {
+  'Jewellery': ['Bangles','Ring','Earrings','Bracelets','Handchains'],
+  'Beauty': ['Blush','Lip','Face','Eyes'],
+  'Skincare': ['Mask','Pimple Patch','Eye Mask'],
+  'Accessories': ['Fake Nails','Organizer']
+};
+
+async function loadProducts() {
+  const { data } = await db.from('products').select('*').eq('is_active', true).order('created_at', { ascending: false });
+  allProducts = data || [];
+  renderProducts();
+}
+
+function filterCategory(cat) {
+  activeCategory = cat;
+  activeSubCategory = null;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.filter-tab').forEach(t => { if(t.textContent.trim() === cat || (cat==='All' && t.textContent.trim()==='All') || (cat==='Bestseller' && t.textContent.trim()==='Best Sellers')) t.classList.add('active'); });
+  renderSubTabs();
+  document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+  renderProducts();
+}
+
+function filterSub(cat, sub) {
+  activeCategory = cat;
+  activeSubCategory = sub;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.filter-tab').forEach(t => { if(t.textContent.trim()===cat) t.classList.add('active'); });
+  renderSubTabs();
+  document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+  renderProducts();
+}
+
+function renderSubTabs() {
+  const subContainer = document.getElementById('sub-tabs');
+  const subs = SUB_CATEGORIES[activeCategory];
+  if (!subs) { subContainer.innerHTML = ''; return; }
+  subContainer.innerHTML = subs.map(s => `
+    <button class="filter-sub-tab ${activeSubCategory===s?'active':''}" onclick="filterSub('${activeCategory}','${s}')">${s}</button>
+  `).join('');
+}
+
+function renderProducts() {
+  const grid = document.getElementById('products-grid');
+  let filtered = allProducts;
+
+  if (activeCategory === 'Bestseller') {
+    filtered = allProducts.filter(p => p.badge && p.badge.toLowerCase() === 'bestseller');
+  } else if (activeCategory !== 'All') {
+    filtered = allProducts.filter(p => p.category === activeCategory);
+    if (activeSubCategory) {
+      filtered = filtered.filter(p => p.sub_category === activeSubCategory);
+    }
+  }
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="products-empty">${allProducts.length===0?'No products yet — check back soon!':'No products in this category yet.'}</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    const variants = Array.isArray(p.variants) ? p.variants : [];
+    const hasVariants = variants.length > 0;
+    const dotsHtml = hasVariants ? `
+      <div class="variant-dots">
+        ${variants.slice(0,6).map((v,i) => `<div class="variant-dot ${i===0?'active':''}" style="background:${v.color||'#ccc'}" title="${v.name||''}" onclick="event.stopPropagation();selectVariantDot(this,'${p.id}',${i})"></div>`).join('')}
+        ${variants.length>6?`<span class="variant-label">+${variants.length-6} more</span>`:''}
+      </div>` : '';
+    return `
+    <div class="product-card fade-up" onclick="openModal(${p.id})">
+      <div class="product-img">
+        ${p.image_url?`<img src="${p.image_url}" alt="${p.name}" id="pimg-${p.id}" />`:`<span class="product-img-icon">✨</span>`}
+        ${p.badge?`<div class="product-badge ${p.badge.toLowerCase()==='new'?'new':p.badge.toLowerCase()==='sale'?'sale':''}">${p.badge}</div>`:''}
+        <div class="product-img-overlay"><span class="overlay-btn">${hasVariants?'View Colors':'Quick View'}</span></div>
+      </div>
+      <div class="product-info">
+        <div class="product-category">${p.sub_category||p.category||''}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-price">৳${Number(p.price).toLocaleString()}${p.original_price?`<span class="product-price-old">৳${Number(p.original_price).toLocaleString()}</span>`:''}</div>
+        ${dotsHtml}
+        <a href="#" class="product-btn" onclick="event.stopPropagation();orderProduct(${p.id})">Order Now</a>
+      </div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+}
+
+function selectVariantDot(dot, productId, variantIndex) {
+  const product = allProducts.find(p => String(p.id)===String(productId));
+  if (!product) return;
+  const variants = Array.isArray(product.variants)?product.variants:[];
+  const variant = variants[variantIndex];
+  dot.closest('.variant-dots').querySelectorAll('.variant-dot').forEach(d => d.classList.remove('active'));
+  dot.classList.add('active');
+  if (variant?.image_url) { const img = document.getElementById(`pimg-${productId}`); if(img) img.src = variant.image_url; }
+}
+
+function openModal(productId) {
+  const product = allProducts.find(p => p.id===productId);
+  if (!product) return;
+  currentProduct = product; selectedVariant = null;
+  const variants = Array.isArray(product.variants)?product.variants:[];
+  document.getElementById('modal-cat').textContent = product.sub_category||product.category||'';
+  document.getElementById('modal-name').textContent = product.name;
+  document.getElementById('modal-price').innerHTML = `৳${Number(product.price).toLocaleString()}${product.original_price?`<span class="modal-price-old">৳${Number(product.original_price).toLocaleString()}</span>`:''}`;
+  const modalImg = document.getElementById('modal-img');
+  modalImg.querySelector('img')?.remove();
+  if (product.image_url) { const img=document.createElement('img'); img.src=product.image_url; img.alt=product.name; modalImg.appendChild(img); document.getElementById('modal-img-icon').style.display='none'; }
+  else { document.getElementById('modal-img-icon').style.display='block'; }
+  const variantsWrap = document.getElementById('modal-variants-wrap');
+  if (variants.length>0) {
+    variantsWrap.style.display='block';
+    document.getElementById('modal-variants').innerHTML = variants.map((v,i) => `
+      <div class="modal-variant-row" onclick="selectModalVariant(${i})" id="mv-${i}">
+        <div class="modal-variant-swatch" style="background:${v.color||'#ccc'}"></div>
+        <span class="modal-variant-name">${v.name||'Variant '+(i+1)}</span>
+        ${v.price?`<span class="modal-variant-price">৳${Number(v.price).toLocaleString()}</span>`:''}
+      </div>`).join('');
+  } else { variantsWrap.style.display='none'; }
+  updateModalOrderBtn();
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function selectModalVariant(index) {
+  const variants = Array.isArray(currentProduct.variants)?currentProduct.variants:[];
+  selectedVariant = variants[index];
+  document.querySelectorAll('.modal-variant-row').forEach((r,i) => r.classList.toggle('selected',i===index));
+  if (selectedVariant?.image_url) { const modalImg=document.getElementById('modal-img'); let img=modalImg.querySelector('img'); if(!img){img=document.createElement('img');modalImg.appendChild(img);document.getElementById('modal-img-icon').style.display='none';} img.src=selectedVariant.image_url; }
+  if (selectedVariant?.price) document.getElementById('modal-price').innerHTML=`৳${Number(selectedVariant.price).toLocaleString()}`;
+  updateModalOrderBtn();
+}
+
+function updateModalOrderBtn() {
+  const variantInfo = selectedVariant?` - ${selectedVariant.name}`:'';
+  const price = selectedVariant?.price||currentProduct.price;
+  const msg = encodeURIComponent(`Hi! I'm interested in ordering: ${currentProduct.name}${variantInfo} (৳${Number(price).toLocaleString()})`);
+  document.getElementById('modal-order-btn').href=`https://m.me/florinae.official?text=${msg}`;
+}
+
+function orderProduct(productId) {
+  const product = allProducts.find(p=>p.id===productId);
+  if (!product) return;
+  const msg = encodeURIComponent(`Hi! I'm interested in ordering: ${product.name} (৳${Number(product.price).toLocaleString()})`);
+  window.open(`https://m.me/florinae.official?text=${msg}`,'_blank');
+}
+
+function closeModal(e) { if(e.target===document.getElementById('modal-overlay')) closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modal-overlay').classList.remove('open'); document.body.style.overflow=''; currentProduct=null; selectedVariant=null; }
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry,i) => { if(entry.isIntersecting) setTimeout(()=>entry.target.classList.add('visible'),i*80); });
+},{threshold:0.1});
+document.querySelectorAll('.fade-up').forEach(el=>observer.observe(el));
+
+function toggleMenu() {
+  const links=document.querySelector('.nav-links');
+  const isOpen=links.style.display==='flex';
+  links.style.cssText=isOpen?'':'display:flex;flex-direction:column;position:fixed;top:56px;left:0;right:0;background:rgba(250,246,240,0.98);padding:2rem;gap:1.5rem;border-bottom:1px solid #e0d5c5;z-index:99';
+}
+
+loadProducts();
+</script>
+</body>
+</html>
