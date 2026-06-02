@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Florinae — Jewellery & Beauty</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#faf6f0;--warm:#f2ebe0;--gold:#c8a96e;--gold2:#e8cfa0;
+  --dark:#1a1410;--brown:#4a3728;--muted:#8a7060;--border:#e0d5c5;
+  --danger:#c97070;--success:#7ab87a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--dark);overflow-x:hidden;}
+
+/* ANNOUNCEMENT BAR */
+.ann-bar{background:var(--dark);overflow:hidden;height:36px;display:flex;align-items:center;}
+.ann-bar.occasion{background:linear-gradient(90deg,#7a1a1a,#c8302a,#7a1a1a);}
+.ann-track{display:flex;white-space:nowrap;animation:annscroll 25s linear infinite;}
+.ann-item{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--gold2);padding:0 3rem;flex-shrink:0;}
+.ann-item::after{content:'✦';margin-left:3rem;opacity:0.5;}
+@keyframes annscroll{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;background:rgba(250,246,240,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);gap:1rem;}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--dark);text-decoration:none;flex-shrink:0;}
+.nav-links{display:flex;gap:2rem;list-style:none;}
+.nav-links a{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.nav-links a:hover{color:var(--dark);}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.nav-cta{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:#fff;background:var(--dark);border:none;padding:9px 18px;border-radius:2px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background 0.25s ease;}
+.nav-cta:hover{background:var(--brown);}
+.cart-btn{position:relative;cursor:pointer;background:none;border:1px solid var(--border);padding:8px 14px;border-radius:2px;display:flex;align-items:center;gap:6px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dark);transition:all 0.2s;}
+.cart-btn:hover{border-color:var(--dark);}
+.cart-count{min-width:18px;height:18px;border-radius:9px;background:var(--gold);color:var(--dark);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 4px;opacity:0;transition:opacity 0.2s;}
+.cart-count.show{opacity:1;}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
+.hamburger span{width:22px;height:1px;background:var(--dark);display:block;}
+
+/* CART DRAWER */
+.cart-overlay{position:fixed;inset:0;background:rgba(26,20,16,0.4);z-index:199;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.cart-overlay.open{opacity:1;pointer-events:all;}
+.cart-drawer{position:fixed;top:0;right:0;bottom:0;width:380px;background:var(--cream);z-index:200;box-shadow:-4px 0 24px rgba(26,20,16,0.12);transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;}
+.cart-drawer.open{transform:translateX(0);}
+.cart-head{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.cart-title-text{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;}
+.cart-close-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:4px;}
+.cart-body{flex:1;overflow-y:auto;padding:1rem 1.5rem;}
+.cart-empty-state{text-align:center;padding:3rem 1rem;color:var(--muted);}
+.cart-empty-icon{font-size:36px;display:block;margin-bottom:1rem;opacity:0.3;}
+.cart-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.cart-item:last-child{border-bottom:none;}
+.cart-item-img{width:68px;height:68px;border-radius:4px;background:var(--warm);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.cart-item-img img{width:100%;height:100%;object-fit:cover;}
+.cart-item-info{flex:1;min-width:0;}
+.cart-item-name{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--dark);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cart-item-variant{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.cart-item-price{font-size:13px;font-weight:500;color:var(--brown);margin-bottom:6px;}
+.qty-row{display:flex;align-items:center;gap:8px;}
+.qty-btn{width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--dark);transition:all 0.2s cubic-bezier(0.4,0,0.2,1);line-height:1;}
+.qty-btn:hover{background:var(--dark);color:#fff;border-color:var(--dark);}
+.qty-num{font-size:14px;font-weight:500;color:var(--dark);min-width:20px;text-align:center;}
+.cart-item-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;padding:4px;border-radius:4px;flex-shrink:0;transition:all 0.15s;}
+.cart-item-del:hover{color:var(--danger);}
+.cart-foot{padding:1.2rem 1.5rem;border-top:1px solid var(--border);}
+.bundle-banner{padding:10px 14px;border-radius:6px;margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.bundle-banner.applied{background:#eaf6ea;border:1px solid var(--success);}
+.bundle-banner.pending{background:var(--warm);border:1px solid var(--border);}
+.bundle-banner-icon{font-size:16px;flex-shrink:0;}
+.bundle-banner-text{flex:1;}
+.bundle-banner-text strong{font-size:12px;display:block;color:var(--dark);}
+.bundle-banner-text span{font-size:11px;color:var(--muted);}
+.bundle-shop-lnk{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--brown);text-decoration:none;white-space:nowrap;}
+.cart-total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.cart-total-lbl{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.cart-total-amt{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--dark);}
+.cart-order-btn{display:block;width:100%;font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;text-align:center;color:#fff;background:var(--dark);border:none;padding:13px;border-radius:2px;cursor:pointer;text-decoration:none;transition:background 0.2s;margin-bottom:8px;}
+.cart-order-btn:hover{background:var(--brown);}
+.cart-cont-btn{display:block;text-align:center;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;background:none;border:none;width:100%;padding:6px;}
+
+/* ZOOM OVERLAY */
+.zoom-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:500;display:none;align-items:center;justify-content:center;}
+.zoom-overlay.open{display:flex;}
+.zoom-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.15);border:none;width:36px;height:36px;border-radius:50%;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.zoom-img{max-width:95vw;max-height:95vh;object-fit:contain;user-select:none;touch-action:pinch-zoom;transition:transform 0.1s;}
+
+/* PRODUCT MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,20,16,0.7);z-index:150;display:none;align-items:center;justify-content:center;padding:1.5rem;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--cream);border-radius:8px;max-width:820px;width:100%;max-height:92vh;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;position:relative;}
+.modal-media-wrap{min-height:420px;background:linear-gradient(135deg,#ede5d8,#ddd0be);position:relative;overflow:hidden;cursor:zoom-in;}
+.modal-main-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;transition:opacity 0.25s ease;}
+.modal-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:80px;opacity:0.12;}
+.modal-close-btn{position:absolute;top:1rem;right:1rem;background:rgba(26,20,16,0.15);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;z-index:3;}
+.gallery-prev,.gallery-next{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.85);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;z-index:3;}
+.gallery-prev{left:10px;}
+.gallery-next{right:10px;}
+.gallery-thumbs{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:6px;z-index:3;padding:0 8px;}
+.gallery-thumb{width:44px;height:44px;border-radius:4px;overflow:hidden;cursor:pointer;border:2px solid rgba(255,255,255,0.4);transition:border-color 0.2s;flex-shrink:0;}
+.gallery-thumb img{width:100%;height:100%;object-fit:cover;}
+.gallery-thumb.active{border-color:#fff;box-shadow:0 0 0 1px rgba(0,0,0,0.3);}
+.modal-info{padding:2rem;display:flex;flex-direction:column;overflow-y:auto;max-height:92vh;}
+.modal-badges{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.mbadge{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:3px 9px;border-radius:2px;}
+.mbadge.new{background:var(--gold);color:var(--dark);}
+.mbadge.best{background:var(--dark);color:#fff;}
+.mbadge.pop{background:var(--brown);color:#fff;}
+.mbadge.sale{background:#c07070;color:#fff;}
+.modal-cat-text{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.modal-name-text{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:var(--dark);margin-bottom:6px;line-height:1.2;}
+.modal-desc-text{font-size:13px;font-weight:300;line-height:1.8;color:var(--muted);margin-bottom:10px;}
+.modal-price-text{font-size:18px;font-weight:500;color:var(--brown);margin-bottom:1rem;display:flex;align-items:center;gap:10px;}
+.modal-price-old{font-size:14px;color:var(--muted);text-decoration:line-through;font-weight:300;}
+.modal-sec-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+/* ── MINIMAL MODAL SWATCHES ── */
+.modal-swatches{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.2rem;}
+.swatch-btn{
+  display:flex;align-items:center;gap:8px;
+  cursor:pointer;
+  padding:6px 14px 6px 8px;
+  border-radius:40px;
+  border:1.5px solid var(--border);
+  background:transparent;
+  transition:border-color 0.2s ease,background 0.2s ease,transform 0.2s ease;
+  font-family:'Jost',sans-serif;
+}
+.swatch-btn:hover{border-color:rgba(26,20,16,0.35);background:var(--warm);transform:translateY(-1px);}
+.swatch-btn.sel{border-color:var(--dark);background:var(--warm);}
+.swatch-circle{
+  width:18px;height:18px;border-radius:50%;
+  border:2px solid rgba(255,255,255,0.8);
+  box-shadow:0 1px 4px rgba(0,0,0,0.18);
+  flex-shrink:0;
+}
+.swatch-btn.sel .swatch-circle{box-shadow:0 0 0 1.5px var(--dark),0 1px 4px rgba(0,0,0,0.15);}
+.swatch-label{
+  font-size:11px;letter-spacing:0.6px;
+  color:var(--muted);
+  white-space:nowrap;
+  transition:color 0.2s;
+}
+.swatch-btn.sel .swatch-label,.swatch-btn:hover .swatch-label{color:var(--dark);}
+.swatch-check{display:none;}
+.modal-also-wrap{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);}
+.modal-also-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.modal-also-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+.also-item{flex-shrink:0;width:80px;cursor:pointer;text-align:center;}
+.also-item-img{width:80px;height:80px;border-radius:4px;background:var(--warm);overflow:hidden;margin-bottom:4px;display:flex;align-items:center;justify-content:center;font-size:20px;opacity:0.4;}
+.also-item-img img{width:100%;height:100%;object-fit:cover;opacity:1;}
+.also-item-name{font-size:10px;color:var(--dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.also-item-price{font-size:10px;color:var(--brown);}
+.modal-action-row{margin-top:auto;padding-top:1rem;display:flex;flex-direction:column;gap:8px;}
+.modal-add-cart-btn{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;text-align:center;color:var(--dark);background:var(--warm);border:1px solid var(--border);padding:12px;border-radius:2px;cursor:pointer;transition:all 0.2s;}
+.modal-add-cart-btn:hover{background:var(--gold);border-color:var(--gold);}
+.modal-order-lnk{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;text-align:center;color:#fff;background:var(--dark);border:none;padding:12px;border-radius:2px;cursor:pointer;text-decoration:none;display:block;transition:background 0.2s;}
+.modal-order-lnk:hover{background:var(--brown);}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:#fff;font-size:12px;letter-spacing:1px;padding:10px 20px;border-radius:4px;z-index:999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;background:linear-gradient(135deg,var(--cream),var(--warm));}
+.hero-inner{padding:3rem 6rem 4rem;max-width:700px;}
+@media(max-width:768px){
+  .hero{min-height:auto;}
+  .hero-inner{padding:2rem 1.5rem 2.5rem;}
+}
+.hero-tag{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:1.5rem;display:flex;align-items:center;gap:10px;}
+.hero-tag::before{content:'';width:30px;height:1px;background:var(--gold);}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(52px,7vw,88px);font-weight:300;line-height:1.05;color:var(--dark);margin-bottom:1.5rem;}
+.hero-title em{font-style:italic;color:var(--brown);}
+.hero-desc{font-size:15px;font-weight:300;line-height:1.8;color:var(--muted);max-width:380px;margin-bottom:2.5rem;}
+.hero-btns{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;}
+.btn-primary{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:#fff;background:var(--dark);border:none;padding:14px 32px;border-radius:2px;cursor:pointer;text-decoration:none;transition:background 0.2s;}
+.btn-primary:hover{background:var(--brown);}
+.btn-ghost{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:14px 0;border-bottom:1px solid transparent;transition:all 0.2s;}
+.btn-ghost:hover{color:var(--dark);border-bottom-color:var(--dark);}
+
+/* BUNDLE BAR */
+.bundle-bar{background:linear-gradient(135deg,var(--brown),var(--dark));padding:0.9rem 2rem;display:none;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap;}
+.bundle-bar-text{font-size:13px;color:var(--gold2);letter-spacing:1px;}
+.bundle-bar-text strong{color:#fff;}
+.bundle-shop-btn{font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--dark);background:var(--gold2);border:none;padding:7px 16px;border-radius:2px;cursor:pointer;text-decoration:none;}
+
+/* MARQUEE */
+.marquee-wrap{background:var(--dark);padding:14px 0;overflow:hidden;}
+.marquee-track{display:flex;white-space:nowrap;animation:marquee 20s linear infinite;}
+.marquee-item{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold2);padding:0 2.5rem;display:inline-flex;align-items:center;gap:2rem;}
+.marquee-item::after{content:'✦';font-size:8px;opacity:0.6;}
+@keyframes marquee{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* SECTION */
+.section{padding:6rem;}
+.section-tag{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;display:flex;align-items:center;gap:10px;}
+.section-tag::before{content:'';width:24px;height:1px;background:var(--gold);}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:clamp(36px,5vw,56px);font-weight:300;line-height:1.1;color:var(--dark);margin-bottom:3rem;}
+
+/* CATEGORIES */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.cat-card{position:relative;overflow:hidden;border-radius:8px;cursor:pointer;display:flex;align-items:flex-end;height:220px;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1),box-shadow 0.35s cubic-bezier(0.4,0,0.2,1);}
+.cat-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(26,20,16,0.15);}
+.cat-card:hover .cat-bg-inner{transform:scale(1.06);}
+.cat-bg-inner{position:absolute;inset:0;transition:transform 0.55s cubic-bezier(0.4,0,0.2,1);display:flex;align-items:center;justify-content:center;}
+.cat-icon-big{font-size:72px;opacity:0.18;position:absolute;}
+.cat-card.c-bestseller .cat-bg-inner{background:linear-gradient(135deg,#f0e8c8,#d4a853,#8a6820);}
+.cat-card.c-jewellery .cat-bg-inner{background:linear-gradient(135deg,#e8d5b8,#c8a96e,#8a6940);}
+.cat-card.c-beauty .cat-bg-inner{background:linear-gradient(135deg,#f0d0d8,#e0909a,#c06070);}
+.cat-card.c-skincare .cat-bg-inner{background:linear-gradient(135deg,#d0e8e0,#90c8b0,#508878);}
+.cat-card.c-accessories .cat-bg-inner{background:linear-gradient(135deg,#ddd0f0,#b090d8,#806098);}
+.cat-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(20,14,8,0.8),transparent 60%);}
+.cat-info-box{position:relative;z-index:2;padding:1.4rem;}
+.cat-name-text{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#fff;margin-bottom:6px;}
+.cat-pills-row{display:flex;flex-wrap:wrap;gap:5px;}
+.cat-pill{font-size:9px;letter-spacing:1px;text-transform:uppercase;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);padding:3px 8px;border-radius:20px;backdrop-filter:blur(4px);}
+.cat-arr{position:absolute;top:1rem;right:1rem;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:13px;opacity:0;transition:opacity 0.2s;color:#fff;}
+.cat-card:hover .cat-arr{opacity:1;}
+
+/* PRODUCTS */
+.products-section{background:var(--warm);}
+.products-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+.filter-wrap{margin-bottom:1.5rem;}
+.filter-main-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.filter-sub-row{display:flex;gap:6px;flex-wrap:wrap;min-height:28px;}
+.ftab{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:8px 18px;border-radius:30px;border:1.5px solid var(--border);background:var(--cream);color:var(--muted);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.ftab:hover{border-color:var(--brown);color:var(--brown);}
+.ftab.active{background:var(--dark);color:#fff;border-color:var(--dark);box-shadow:0 2px 8px rgba(26,20,16,0.18);}
+.fstab{font-family:'Jost',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.fstab:hover{border-color:var(--gold);color:var(--brown);}
+.fstab.active{background:var(--gold);color:var(--dark);border-color:var(--gold);font-weight:500;}
+.products-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+.product-card{background:var(--cream);border-radius:4px;overflow:hidden;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1),box-shadow 0.35s cubic-bezier(0.4,0,0.2,1);cursor:pointer;}
+.product-card:hover{transform:translateY(-5px);box-shadow:0 24px 48px rgba(26,20,16,0.12);}
+.prod-img-wrap{height:260px;background:linear-gradient(135deg,#ede5d8,#ddd0be);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.prod-img-wrap img,.prod-img-wrap video{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;transition:transform 0.55s cubic-bezier(0.4,0,0.2,1);}
+.product-card:hover .prod-img-wrap img{transform:scale(1.07);}
+.prod-icon{font-size:60px;opacity:0.15;}
+.prod-badges{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;z-index:2;}
+.pbadge{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;padding:3px 9px;border-radius:2px;}
+.pbadge.new{background:var(--gold);color:var(--dark);}
+.pbadge.best{background:var(--dark);}
+.pbadge.pop{background:var(--brown);}
+.pbadge.sale{background:#c07070;}
+.prod-overlay{position:absolute;inset:0;background:rgba(26,20,16,0.45);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s;z-index:3;}
+.product-card:hover .prod-overlay{opacity:1;}
+.overlay-txt{font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:#fff;background:rgba(255,255,255,0.15);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.4);padding:10px 20px;border-radius:2px;}
+.prod-info{padding:1rem;}
+.prod-cat-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.prod-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:400;color:var(--dark);margin-bottom:6px;line-height:1.3;}
+.prod-price-row{font-size:14px;font-weight:500;color:var(--brown);display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.prod-price-old{font-size:12px;color:var(--muted);text-decoration:line-through;font-weight:300;}
+/* ── VARIANT DOTS (product card) ── */
+.vdots-row{display:flex;gap:7px;align-items:center;margin-bottom:9px;flex-wrap:wrap;}
+.vdot{
+  position:relative;
+  width:20px;height:20px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,0.85);
+  box-shadow:0 1px 4px rgba(0,0,0,0.18);
+  cursor:pointer;
+  transition:transform 0.2s ease,box-shadow 0.2s ease,border-color 0.2s ease;
+  flex-shrink:0;
+}
+.vdot:hover{transform:scale(1.25);box-shadow:0 3px 8px rgba(0,0,0,0.22);}
+.vdot.active{border-color:var(--dark);box-shadow:0 0 0 2px var(--dark),0 2px 6px rgba(0,0,0,0.15);transform:scale(1.18);}
+.vdot[data-tip]::after{
+  content:attr(data-tip);
+  position:absolute;
+  bottom:calc(100% + 7px);left:50%;
+  transform:translateX(-50%) translateY(4px);
+  background:var(--dark);color:#fff;
+  font-family:'Jost',sans-serif;font-size:9px;letter-spacing:0.8px;
+  white-space:nowrap;padding:3px 8px;border-radius:3px;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.18s ease,transform 0.18s ease;
+  z-index:10;
+}
+.vdot[data-tip]:hover::after{opacity:1;transform:translateX(-50%) translateY(0);}
+.vdot-more{font-size:10px;color:var(--muted);letter-spacing:0.5px;}
+.prod-btn-row{display:flex;gap:6px;}
+.prod-order-btn{flex:1;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;text-align:center;color:#fff;background:var(--dark);border:1px solid var(--dark);padding:9px 4px;border-radius:2px;cursor:pointer;text-decoration:none;transition:all 0.2s;}
+.prod-order-btn:hover{background:var(--brown);border-color:var(--brown);}
+.prod-cart-btn{flex:1;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;text-align:center;color:var(--dark);background:transparent;border:1px solid var(--border);padding:9px 4px;border-radius:2px;cursor:pointer;transition:all 0.2s;}
+.prod-cart-btn:hover{background:var(--warm);border-color:var(--dark);}
+.prod-cart-btn.added{background:var(--success);color:#fff;border-color:var(--success);}
+.products-empty{text-align:center;padding:3rem;color:var(--muted);grid-column:1/-1;}
+
+/* SKELETON */
+.skel{background:linear-gradient(90deg,var(--border) 25%,var(--warm) 50%,var(--border) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:4px;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-card{background:var(--cream);border-radius:4px;overflow:hidden;}
+.skel-img{height:260px;}
+.skel-pad{padding:1rem;}
+.skel-line{height:10px;margin-bottom:8px;border-radius:3px;}
+.skel-line.s{width:50%;}.skel-line.m{width:75%;}
+.skel-btn{height:34px;margin-top:8px;border-radius:2px;}
+
+/* PAGINATION */
+.pagination{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:2.5rem;flex-wrap:wrap;}
+.pag-btn{font-family:'Jost',sans-serif;font-size:12px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:2px;background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.pag-btn:hover:not(.dis){border-color:var(--dark);color:var(--dark);}
+.pag-btn.act{background:var(--dark);color:#fff;border-color:var(--dark);}
+.pag-btn.dis{opacity:0.3;cursor:not-allowed;}
+
+.why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;}
+.why-card{text-align:center;padding:2rem 1rem;}
+.why-icon{font-size:28px;margin-bottom:1rem;display:block;}
+.why-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--dark);margin-bottom:8px;}
+.why-desc{font-size:13px;font-weight:300;line-height:1.7;color:var(--muted);}
+
+.testimonials-section{background:var(--warm);}
+.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;}
+.testimonial-card{background:#fff;border:1px solid var(--border);border-radius:4px;padding:2rem;}
+.testimonial-stars{color:var(--gold);font-size:13px;margin-bottom:1rem;letter-spacing:2px;}
+.testimonial-text{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;font-weight:300;color:var(--brown);line-height:1.7;margin-bottom:1.5rem;}
+.testimonial-author{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+
+.cta-section{background:linear-gradient(135deg,var(--dark),var(--brown));padding:6rem;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;}
+.cta-title{font-family:'Cormorant Garamond',serif;font-size:clamp(36px,4vw,52px);font-weight:300;line-height:1.15;color:var(--cream);}
+.cta-title em{font-style:italic;color:var(--gold2);}
+.cta-right{display:flex;flex-direction:column;gap:1.5rem;}
+.cta-desc{font-size:15px;font-weight:300;line-height:1.8;color:rgba(250,246,240,0.6);}
+.cta-btn{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:var(--dark);background:var(--gold2);border:none;padding:16px 36px;border-radius:2px;cursor:pointer;text-decoration:none;display:inline-block;align-self:flex-start;transition:background 0.2s;}
+.cta-btn:hover{background:var(--gold);}
+
+/* STICKY BOTTOM */
+.sticky-bottom{position:fixed;bottom:0;left:0;right:0;z-index:98;background:rgba(250,246,240,0.97);backdrop-filter:blur(12px);border-top:1px solid var(--border);display:none;padding:10px 2rem;align-items:center;justify-content:space-around;}
+.sn-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;background:none;border:none;color:var(--muted);font-family:'Jost',sans-serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;transition:color 0.2s;}
+.sn-item:hover{color:var(--dark);}
+.sn-icon{font-size:20px;}
+.sn-badge-wrap{position:relative;}
+.sn-badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--gold);color:var(--dark);font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 3px;opacity:0;}
+.sn-badge.show{opacity:1;}
+
+footer{background:var(--dark);padding:3rem 6rem 2rem;display:grid;grid-template-columns:2fr 1fr 1fr;gap:4rem;}
+.footer-logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--cream);margin-bottom:1rem;display:block;}
+.footer-desc{font-size:13px;font-weight:300;line-height:1.8;color:rgba(250,246,240,0.4);max-width:260px;}
+.footer-col-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold2);margin-bottom:1.2rem;}
+.footer-links{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.footer-links a{font-size:13px;font-weight:300;color:rgba(250,246,240,0.4);text-decoration:none;transition:color 0.2s;}
+.footer-links a:hover{color:var(--cream);}
+.footer-bottom{background:var(--dark);padding:1.2rem 6rem;border-top:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;}
+.footer-copy{font-size:11px;color:rgba(250,246,240,0.25);letter-spacing:1px;}
+.footer-social{display:flex;gap:1.5rem;}
+.footer-social a{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(250,246,240,0.35);text-decoration:none;transition:color 0.2s;}
+.footer-social a:hover{color:var(--gold2);}
+
+.fade-up{opacity:0;transform:translateY(24px);}
+.fade-up.visible{opacity:1;transform:translateY(0);}
+*{transition:color 0.2s,background-color 0.2s,border-color 0.2s,opacity 0.2s,transform 0.2s,box-shadow 0.2s;}
+img{transition:opacity 0.3s ease,transform 0.4s ease!important;}
+.modal-overlay{transition:opacity 0.3s ease!important;}
+.modal-box{animation:modalSlideIn 0.3s ease;}
+@keyframes modalSlideIn{from{opacity:0;transform:translateY(20px)scale(0.97);}to{opacity:1;transform:translateY(0)scale(1);}}
+.cart-drawer{transition:transform 0.35s cubic-bezier(0.4,0,0.2,1)!important;}
+.zoom-overlay{transition:opacity 0.25s ease!important;}
+.zoom-img{transition:transform 0.2s ease!important;}
+.product-card{transition:transform 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s ease!important;}
+.cat-card{transition:transform 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s ease!important;}
+.cat-bg-inner{transition:transform 0.5s cubic-bezier(0.4,0,0.2,1)!important;}
+.ftab,.fstab,.nav-links a,.btn-primary,.btn-ghost,.prod-cart-btn,.prod-order-btn,.cart-order-btn,.modal-add-cart-btn,.modal-order-lnk,.qty-btn,.pag-btn{transition:all 0.2s cubic-bezier(0.4,0,0.2,1)!important;}
+.fade-up{transition:opacity 0.6s cubic-bezier(0.4,0,0.2,1),transform 0.6s cubic-bezier(0.4,0,0.2,1)!important;}
+.ann-track{animation:annscroll 25s linear infinite!important;}
+.swatch-btn{transition:all 0.2s cubic-bezier(0.4,0,0.2,1)!important;}
+.swatch-circle{transition:box-shadow 0.2s,transform 0.2s!important;}
+.gallery-thumb{transition:border-color 0.2s,box-shadow 0.2s!important;}
+.toast{transition:opacity 0.3s ease,transform 0.3s cubic-bezier(0.4,0,0.2,1)!important;}
+.cart-count,.sn-badge{transition:opacity 0.3s ease,transform 0.2s ease!important;}
+.cart-count.show,.sn-badge.show{animation:badgePop 0.3s cubic-bezier(0.4,0,0.2,1);}
+@keyframes badgePop{0%{transform:scale(0.5);}70%{transform:scale(1.2);}100%{transform:scale(1);}}
+
+@media(max-width:768px){
+  nav{padding:0.8rem 1rem;}
+  .nav-links,.nav-cta{display:none;}
+  .hamburger{display:flex;}
+  .hero-inner{padding:3rem 1.5rem 2rem;}
+  .section{padding:3.5rem 1.5rem;}
+  .cat-grid{grid-template-columns:1fr 1fr;}
+  .cat-card{height:160px;}
+  .products-grid{grid-template-columns:1fr 1fr;}
+  .why-grid{grid-template-columns:1fr 1fr;}
+  .testimonials-grid{grid-template-columns:1fr;}
+  .cta-section{grid-template-columns:1fr;padding:3.5rem 1.5rem;gap:2rem;}
+  footer{grid-template-columns:1fr;gap:2rem;padding:3rem 1.5rem 5rem;}
+  .footer-bottom{padding:1.2rem 1.5rem;flex-direction:column;gap:1rem;text-align:center;}
+  .modal-box{grid-template-columns:1fr;}
+  .modal-media-wrap{min-height:260px;}
+  .cart-drawer{width:100%;}
+  .sticky-bottom{display:flex;}
+  body{padding-bottom:60px;}
+}
+@media(min-width:769px){.sticky-bottom{display:none!important;}}
+</style>
+</head>
+<body>
+
+<div class="ann-bar" id="ann-bar">
+  <div class="ann-track" id="ann-track"></div>
+</div>
+
+<nav>
+  <a href="#" class="nav-logo">Florinae</a>
+  <ul class="nav-links">
+    <li><a href="#categories">Collection</a></li>
+    <li><a href="#products">Shop</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="https://www.facebook.com/florinae.official" target="_blank" class="nav-cta">Shop Now</a>
+    <button class="cart-btn" id="cart-toggle-btn">🛍️ Cart <span class="cart-count" id="cart-count">0</span></button>
+    <button class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- CART -->
+<div class="cart-overlay" id="cart-overlay"></div>
+<div class="cart-drawer" id="cart-drawer">
+  <div class="cart-head">
+    <div class="cart-title-text">Your Cart</div>
+    <button class="cart-close-btn" id="cart-close-btn">✕</button>
+  </div>
+  <div class="cart-body" id="cart-body">
+    <div class="cart-empty-state"><span class="cart-empty-icon">🛍️</span>Your cart is empty!</div>
+  </div>
+  <div class="cart-foot" id="cart-foot" style="display:none">
+    <div id="bundle-banner-wrap"></div>
+    <div class="cart-total-row">
+      <span class="cart-total-lbl">Total</span>
+      <span class="cart-total-amt" id="cart-total-amt">৳0</span>
+    </div>
+    <a href="#" class="cart-order-btn" id="cart-order-btn" target="_blank">Order via Messenger</a>
+    <button class="cart-cont-btn" id="cart-cont-btn">Continue Shopping</button>
+  </div>
+</div>
+
+<!-- ZOOM -->
+<div class="zoom-overlay" id="zoom-overlay">
+  <button class="zoom-close" id="zoom-close-btn">✕</button>
+  <img class="zoom-img" id="zoom-img" src="" alt="" />
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close-btn" id="modal-close-btn">✕</button>
+    <div class="modal-media-wrap" id="modal-media-wrap">
+      <div class="modal-placeholder" id="modal-placeholder">✨</div>
+      <button class="gallery-prev" id="gallery-prev" style="display:none">‹</button>
+      <button class="gallery-next" id="gallery-next" style="display:none">›</button>
+      <div class="gallery-thumbs" id="gallery-thumbs"></div>
+    </div>
+    <div class="modal-info">
+      <div class="modal-badges" id="modal-badges"></div>
+      <div class="modal-cat-text" id="modal-cat"></div>
+      <div class="modal-name-text" id="modal-name"></div>
+      <div class="modal-desc-text" id="modal-desc" style="display:none"></div>
+      <div class="modal-price-text" id="modal-price"></div>
+      <div id="modal-variants-section" style="display:none">
+        <div class="modal-sec-lbl">Available Colors / Variants</div>
+        <div class="modal-swatches" id="modal-swatches"></div>
+      </div>
+      <div class="modal-also-wrap" id="modal-also" style="display:none">
+        <div class="modal-also-lbl">You Might Also Like</div>
+        <div class="modal-also-row" id="modal-also-row"></div>
+      </div>
+      <div class="modal-action-row">
+        <button class="modal-add-cart-btn" id="modal-add-cart-btn">+ Add to Cart</button>
+        <a href="#" class="modal-order-lnk" id="modal-order-lnk" target="_blank">Order Now via Messenger</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- STICKY BOTTOM -->
+<div class="sticky-bottom">
+  <a href="#" class="sn-item"><span class="sn-icon">🏠</span>Home</a>
+  <a href="#categories" class="sn-item"><span class="sn-icon">✨</span>Shop</a>
+  <div class="sn-badge-wrap">
+    <button class="sn-item" id="sn-cart-btn"><span class="sn-icon">🛍️</span>Cart</button>
+    <div class="sn-badge" id="sn-badge">0</div>
+  </div>
+  <a href="https://m.me/florinae.official" target="_blank" class="sn-item"><span class="sn-icon">💬</span>Message</a>
+  <a href="https://www.instagram.com/florinae.official?igsh=MXF2d292djR3Nzl4bg==" target="_blank" class="sn-item"><span class="sn-icon">📸</span>Instagram</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">New Collection 2026</div>
+    <h1 class="hero-title">A Little<br><em>Luxury</em><br>For You</h1>
+    <p class="hero-desc">Curated jewellery and beauty for the woman who knows what she loves.</p>
+    <div class="hero-btns">
+      <a href="#products" class="btn-primary">Shop the Collection</a>
+      <a href="#categories" class="btn-ghost">Explore →</a>
+    </div>
+  </div>
+</section>
+
+<div class="bundle-bar" id="bundle-bar">
+  <span class="bundle-bar-text" id="bundle-bar-text"></span>
+  <a href="#products" class="bundle-shop-btn">Shop Now</a>
+</div>
+
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="marquee-item">Jewellery</span><span class="marquee-item">Beauty</span><span class="marquee-item">Florinae</span><span class="marquee-item">New Arrivals</span><span class="marquee-item">Fast Delivery</span><span class="marquee-item">Skincare</span><span class="marquee-item">Accessories</span><span class="marquee-item">Bestsellers</span><span class="marquee-item">Jewellery</span><span class="marquee-item">Beauty</span><span class="marquee-item">Florinae</span><span class="marquee-item">New Arrivals</span><span class="marquee-item">Fast Delivery</span><span class="marquee-item">Skincare</span><span class="marquee-item">Accessories</span><span class="marquee-item">Bestsellers</span>
+  </div>
+</div>
+
+<section class="section" id="categories">
+  <div class="section-tag">Browse By Category</div>
+  <h2 class="section-title">Our Collections</h2>
+  <div class="cat-grid">
+    <div class="cat-card c-bestseller fade-up" data-cat="Bestseller">
+      <div class="cat-bg-inner"><span class="cat-icon-big">⭐</span></div><div class="cat-ov"></div><div class="cat-arr">→</div>
+      <div class="cat-info-box"><div class="cat-name-text">Best Sellers</div><div class="cat-pills-row"><span class="cat-pill">Top Picks</span><span class="cat-pill">Most Loved</span></div></div>
+    </div>
+    <div class="cat-card c-jewellery fade-up" data-cat="Jewellery">
+      <div class="cat-bg-inner"><span class="cat-icon-big">💍</span></div><div class="cat-ov"></div><div class="cat-arr">→</div>
+      <div class="cat-info-box"><div class="cat-name-text">Jewellery</div><div class="cat-pills-row">
+        <span class="cat-pill" data-sub="Bangles">Bangles</span><span class="cat-pill" data-sub="Ring">Ring</span><span class="cat-pill" data-sub="Earrings">Earrings</span><span class="cat-pill" data-sub="Bracelets">Bracelets</span><span class="cat-pill" data-sub="Handchains">Handchains</span>
+      </div></div>
+    </div>
+    <div class="cat-card c-beauty fade-up" data-cat="Beauty">
+      <div class="cat-bg-inner"><span class="cat-icon-big">💄</span></div><div class="cat-ov"></div><div class="cat-arr">→</div>
+      <div class="cat-info-box"><div class="cat-name-text">Beauty</div><div class="cat-pills-row">
+        <span class="cat-pill" data-sub="Blush">Blush</span><span class="cat-pill" data-sub="Lip">Lip</span><span class="cat-pill" data-sub="Face">Face</span><span class="cat-pill" data-sub="Eyes">Eyes</span>
+      </div></div>
+    </div>
+    <div class="cat-card c-skincare fade-up" data-cat="Skincare">
+      <div class="cat-bg-inner"><span class="cat-icon-big">✨</span></div><div class="cat-ov"></div><div class="cat-arr">→</div>
+      <div class="cat-info-box"><div class="cat-name-text">Skincare</div><div class="cat-pills-row">
+        <span class="cat-pill" data-sub="Mask">Mask</span><span class="cat-pill" data-sub="Pimple Patch">Pimple Patch</span><span class="cat-pill" data-sub="Eye Mask">Eye Mask</span>
+      </div></div>
+    </div>
+    <div class="cat-card c-accessories fade-up" data-cat="Accessories">
+      <div class="cat-bg-inner"><span class="cat-icon-big">📿</span></div><div class="cat-ov"></div><div class="cat-arr">→</div>
+      <div class="cat-info-box"><div class="cat-name-text">Accessories</div><div class="cat-pills-row">
+        <span class="cat-pill" data-sub="Fake Nails">Fake Nails</span><span class="cat-pill" data-sub="Organizer">Organizer</span>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section products-section" id="products">
+  <div class="products-header">
+    <div>
+      <div class="section-tag">Handpicked For You</div>
+      <h2 class="section-title" style="margin-bottom:0">Shop Products</h2>
+    </div>
+    <a href="https://m.me/florinae.official" target="_blank" class="btn-ghost">Message Us →</a>
+  </div>
+  <div class="filter-wrap">
+    <div class="filter-main-row" id="filter-main-row">
+      <button class="ftab active" data-cat="All">All</button>
+      <button class="ftab" data-cat="New">New Arrivals</button>
+      <button class="ftab" data-cat="Popular">Most Popular</button>
+      <button class="ftab" data-cat="Bestseller">Best Sellers</button>
+      <button class="ftab" data-cat="Jewellery">Jewellery</button>
+      <button class="ftab" data-cat="Beauty">Beauty</button>
+      <button class="ftab" data-cat="Skincare">Skincare</button>
+      <button class="ftab" data-cat="Accessories">Accessories</button>
+    </div>
+    <div class="filter-sub-row" id="filter-sub-row"></div>
+  </div>
+  <div class="products-grid" id="products-grid"></div>
+  <div class="pagination" id="pagination"></div>
+</section>
+
+<section class="section" id="about">
+  <div class="section-tag">Why Florinae</div>
+  <h2 class="section-title">Crafted With Love</h2>
+  <div class="why-grid">
+    <div class="why-card fade-up"><span class="why-icon">🎁</span><div class="why-title">Gift Packaging</div><p class="why-desc">Every order comes beautifully packaged, ready to give or keep for yourself.</p></div>
+    <div class="why-card fade-up"><span class="why-icon">✅</span><div class="why-title">100% Authentic</div><p class="why-desc">We source only genuine, high-quality products you can trust on your skin.</p></div>
+    <div class="why-card fade-up"><span class="why-icon">🚚</span><div class="why-title">Fast Delivery</div><p class="why-desc">Quick and careful delivery straight to your doorstep across Bangladesh.</p></div>
+    <div class="why-card fade-up"><span class="why-icon">💬</span><div class="why-title">Personal Service</div><p class="why-desc">We're always here to help you find the perfect piece or product for you.</p></div>
+  </div>
+</section>
+
+<section class="section testimonials-section">
+  <div class="section-tag">Customer Love</div>
+  <h2 class="section-title">What They Say</h2>
+  <div class="testimonials-grid">
+    <div class="testimonial-card fade-up"><div class="testimonial-stars">★★★★★</div><p class="testimonial-text">"The necklace I ordered was even more beautiful in person!"</p><div class="testimonial-author">— Sadia R., Dhaka</div></div>
+    <div class="testimonial-card fade-up"><div class="testimonial-stars">★★★★★</div><p class="testimonial-text">"Amazing quality lipstick. Lasts all day and exactly as shown."</p><div class="testimonial-author">— Nusrat J., Chittagong</div></div>
+    <div class="testimonial-card fade-up"><div class="testimonial-stars">★★★★★</div><p class="testimonial-text">"Fast delivery and lovely products. My go-to for gifts!"</p><div class="testimonial-author">— Tania K., Sylhet</div></div>
+  </div>
+</section>
+
+<section class="cta-section" id="contact">
+  <div><h2 class="cta-title">Ready to Find<br>Your <em>Perfect</em><br>Piece?</h2></div>
+  <div class="cta-right">
+    <p class="cta-desc">Message us on Facebook — we'll help you find exactly what you're looking for.</p>
+    <a href="https://m.me/florinae.official" target="_blank" class="cta-btn">Message Us on Facebook →</a>
+  </div>
+</section>
+
+<footer>
+  <div><span class="footer-logo">Florinae</span><p class="footer-desc">Curated jewellery and beauty for every woman. Delivered with care across Bangladesh.</p></div>
+  <div><div class="footer-col-title">Quick Links</div><ul class="footer-links"><li><a href="#categories">Collections</a></li><li><a href="#products">Shop</a></li><li><a href="#about">About Us</a></li><li><a href="#contact">Contact</a></li></ul></div>
+  <div><div class="footer-col-title">Follow Us</div><ul class="footer-links"><li><a href="https://www.facebook.com/florinae.official" target="_blank">Facebook</a></li><li><a href="https://m.me/florinae.official" target="_blank">Messenger</a></li><li><a href="https://www.instagram.com/florinae.official?igsh=MXF2d292djR3Nzl4bg==" target="_blank">Instagram</a></li></ul></div>
+</footer>
+<div class="footer-bottom">
+  <span class="footer-copy">© 2026 Florinae. All rights reserved.</span>
+  <div class="footer-social">
+    <a href="https://www.facebook.com/florinae.official" target="_blank">Facebook</a>
+    <a href="https://www.instagram.com/florinae.official?igsh=MXF2d292djR3Nzl4bg==" target="_blank">Instagram</a>
+  </div>
+</div>
+
+<script>
+const DB_URL='https://zogvgsahakzgmxtijhcj.supabase.co';
+const DB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvZ3Znc2FoYWt6Z214dGlqaGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0Mjc2NTAsImV4cCI6MjA5NTAwMzY1MH0.HC1_eocrY06VxxYFJ5sTfO8LtE7as7OOzF2s4MZGxG4';
+const db=supabase.createClient(DB_URL,DB_KEY);
+
+const SUBS={Jewellery:['Bangles','Ring','Earrings','Bracelets','Handchains'],Beauty:['Blush','Lip','Face','Eyes'],Skincare:['Mask','Pimple Patch','Eye Mask'],Accessories:['Fake Nails','Organizer']};
+const PER=12;
+
+let products=[];
+let cat='All', sub=null, page=1;
+let curProd=null, selVariant=null;
+let galleryImgs=[], galIdx=0;
+let bundleDeal=null;
+let cart=[];
+
+try{cart=JSON.parse(localStorage.getItem('florinae_cart')||'[]');}catch(e){cart=[];}
+
+// ── INIT ──
+async function init(){
+  showSkeleton();
+  setupEvents();
+  await Promise.all([loadAnn(),loadBundle(),loadProds()]);
+  renderCartUI();
+  checkOccasion();
+}
+
+// ── EVENTS ──
+function setupEvents(){
+  // Cart open/close
+  document.getElementById('cart-toggle-btn').onclick=()=>toggleCart();
+  document.getElementById('cart-overlay').onclick=()=>toggleCart(false);
+  document.getElementById('cart-close-btn').onclick=()=>toggleCart(false);
+  document.getElementById('cart-cont-btn').onclick=()=>toggleCart(false);
+  document.getElementById('sn-cart-btn').onclick=()=>toggleCart();
+
+  // Modal close
+  document.getElementById('modal-close-btn').onclick=closeModal;
+  document.getElementById('modal-overlay').onclick=e=>{if(e.target===document.getElementById('modal-overlay'))closeModal();};
+
+  // Gallery
+  document.getElementById('gallery-prev').onclick=e=>{e.stopPropagation();galGo(galIdx-1);};
+  document.getElementById('gallery-next').onclick=e=>{e.stopPropagation();galGo(galIdx+1);};
+  document.getElementById('modal-media-wrap').onclick=openZoom;
+
+  // Zoom close
+  document.getElementById('zoom-close-btn').onclick=closeZoom;
+  document.getElementById('zoom-overlay').onclick=e=>{if(e.target===document.getElementById('zoom-overlay'))closeZoom();};
+
+  // Modal cart/order
+  document.getElementById('modal-add-cart-btn').onclick=addFromModal;
+
+  // Filter tabs
+  document.getElementById('filter-main-row').onclick=e=>{
+    const btn=e.target.closest('.ftab');
+    if(btn){filterCat(btn.dataset.cat);}
+  };
+
+  // Category cards
+  document.querySelector('.cat-grid').onclick=e=>{
+    const pill=e.target.closest('.cat-pill');
+    const card=e.target.closest('.cat-card');
+    if(pill&&pill.dataset.sub){e.stopPropagation();filterSub(card.dataset.cat,pill.dataset.sub);}
+    else if(card){filterCat(card.dataset.cat);}
+  };
+
+  // Swipe to close cart
+  const drawer=document.getElementById('cart-drawer');
+  let sx=0,dragging=false;
+  drawer.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;dragging=true;drawer.style.transition='none';},{passive:true});
+  drawer.addEventListener('touchmove',e=>{
+    if(!dragging)return;
+    const d=e.touches[0].clientX-sx;
+    if(d>0)drawer.style.transform=`translateX(${d}px)`;
+  },{passive:true});
+  drawer.addEventListener('touchend',e=>{
+    dragging=false;drawer.style.transition='';
+    if(e.changedTouches[0].clientX-sx>80)toggleCart(false);
+    else drawer.style.transform='';
+    sx=0;
+  });
+
+  // Gallery swipe
+  const mw=document.getElementById('modal-media-wrap');
+  let gsx=0;
+  mw.addEventListener('touchstart',e=>{gsx=e.touches[0].clientX;},{passive:true});
+  mw.addEventListener('touchend',e=>{
+    const d=e.changedTouches[0].clientX-gsx;
+    if(Math.abs(d)>50){e.stopPropagation();galGo(galIdx+(d<0?1:-1));}
+  },{passive:true});
+
+  // Pinch zoom on zoom overlay
+  const zi=document.getElementById('zoom-img');
+  let zScale=1,zLastDist=0,zLastTap=0;
+  zi.addEventListener('touchstart',e=>{if(e.touches.length===2)zLastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);},{passive:true});
+  zi.addEventListener('touchmove',e=>{
+    if(e.touches.length!==2)return;
+    e.preventDefault();
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    zScale=Math.min(4,Math.max(1,zScale*(d/zLastDist)));
+    zLastDist=d;
+    zi.style.transform=`scale(${zScale})`;
+  },{passive:false});
+  zi.addEventListener('touchend',()=>{zLastDist=0;});
+  zi.addEventListener('click',()=>{
+    const now=Date.now();
+    if(now-zLastTap<300){zScale=1;zi.style.transform='scale(1)';}
+    zLastTap=now;
+  });
+}
+
+// ── ANNOUNCEMENTS ──
+async function loadAnn(){
+  const{data}=await db.from('announcements').select('*').eq('is_active',true).order('sort_order');
+  if(data&&data.length){
+    const items=[...data,...data].map(a=>`<span class="ann-item">${a.text}</span>`).join('');
+    document.getElementById('ann-track').innerHTML=items;
+  }
+}
+
+// ── BUNDLE ──
+async function loadBundle(){
+  const{data}=await db.from('bundle_deals').select('*').eq('is_active',true).limit(1);
+  bundleDeal=data&&data.length?data[0]:null;
+  const bar=document.getElementById('bundle-bar');
+  if(bundleDeal){
+    bar.style.display='flex';
+    document.getElementById('bundle-bar-text').innerHTML=`🎀 <strong>${bundleDeal.title}:</strong> ${bundleDeal.description}`;
+  }
+}
+
+// ── PRODUCTS ──
+function showSkeleton(){
+  document.getElementById('products-grid').innerHTML=Array(8).fill(0).map(()=>`
+    <div class="skel-card"><div class="skel-img skel"></div><div class="skel-pad">
+      <div class="skel-line s skel"></div><div class="skel-line m skel"></div>
+      <div class="skel-line s skel"></div><div class="skel-btn skel"></div>
+    </div></div>`).join('');
+}
+
+async function loadProds(){
+  const{data}=await db.from('products').select('*').eq('is_active',true).order('created_at',{ascending:false});
+  products=(data||[]).map(p=>{
+    if((p.order_count||0)>=10&&p.badge?.toLowerCase()!=='bestseller')p._autoBest=true;
+    return p;
+  });
+  renderProducts();
+}
+
+function isNew(p){return p.created_at&&(Date.now()-new Date(p.created_at))/86400000<=14;}
+
+function getFiltered(){
+  if(cat==='Bestseller')return products.filter(p=>p.badge?.toLowerCase()==='bestseller'||p._autoBest);
+  if(cat==='New')return products.filter(p=>isNew(p));
+  if(cat==='Popular')return[...products].sort((a,b)=>(b.order_count||0)-(a.order_count||0)).slice(0,20);
+  if(cat!=='All'){
+    let f=products.filter(p=>p.category===cat);
+    if(sub)f=f.filter(p=>p.sub_category===sub);
+    return f;
+  }
+  return products;
+}
+
+function renderProducts(){
+  const filtered=getFiltered();
+  const grid=document.getElementById('products-grid');
+  const pag=document.getElementById('pagination');
+  if(!filtered.length){
+    grid.innerHTML=`<div class="products-empty">${!products.length?'No products yet!':'No products found.'}</div>`;
+    pag.innerHTML='';return;
+  }
+  const totalPages=Math.ceil(filtered.length/PER);
+  if(page>totalPages)page=1;
+  const paged=filtered.slice((page-1)*PER,page*PER);
+  grid.innerHTML=paged.map(p=>{
+    const vv=Array.isArray(p.variants)?p.variants:[];
+    const isNewP=isNew(p),isBest=p.badge?.toLowerCase()==='bestseller'||p._autoBest,isPop=(p.order_count||0)>=5;
+    const badges=[isNewP?'<span class="pbadge new">New</span>':'',isBest?'<span class="pbadge best">Bestseller</span>':'',isPop&&!isBest?'<span class="pbadge pop">Popular</span>':'',p.badge?.toLowerCase()==='sale'&&!isBest?'<span class="pbadge sale">Sale</span>':''].filter(Boolean).join('');
+    const dots=vv.length?`<div class="vdots-row">${vv.slice(0,5).map((v,i)=>`<div class="vdot${i===0?' active':''}" style="background:${v.color||'#ccc'}" data-tip="${v.name||''}" data-pid="${p.id}" data-idx="${i}"></div>`).join('')}${vv.length>5?`<span class="vdot-more">+${vv.length-5}</span>`:''}</div>`:'';    const media=p.video_url?`<video src="${p.video_url}" autoplay muted loop playsinline></video>`:p.image_url?`<img src="${p.image_url}" alt="${p.name}" id="pimg-${p.id}">`:`<span class="prod-icon">✨</span>`;
+    return `<div class="product-card fade-up" data-id="${p.id}">
+      <div class="prod-img-wrap">${media}<div class="prod-badges">${badges}</div><div class="prod-overlay"><span class="overlay-txt">${vv.length?'View Colors':'Quick View'}</span></div></div>
+      <div class="prod-info">
+        <div class="prod-cat-lbl">${p.sub_category||p.category||''}</div>
+        <div class="prod-name">${p.name||''}</div>
+        <div class="prod-price-row">৳${Number(p.price||0).toLocaleString()}${p.original_price?`<span class="prod-price-old">৳${Number(p.original_price).toLocaleString()}</span>`:''}</div>
+        ${dots}
+        <div class="prod-btn-row">
+          <a href="#" class="prod-order-btn" data-order="${p.id}">Order Now</a>
+          <button class="prod-cart-btn" data-cart="${p.id}">+ Cart</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Events on cards
+  grid.querySelectorAll('.product-card').forEach(card=>{
+    const pid=parseInt(card.dataset.id);
+    card.querySelector('.prod-img-wrap').addEventListener('click',()=>openModal(pid));
+    card.querySelector('.prod-name').addEventListener('click',()=>openModal(pid));
+    card.querySelector('.prod-order-btn').addEventListener('click',e=>{e.preventDefault();msgProduct(pid);});
+    card.querySelector('.prod-cart-btn').addEventListener('click',e=>{e.stopPropagation();addToCart(pid,null,e.currentTarget);});
+    card.querySelectorAll('.vdot').forEach(dot=>{
+      dot.addEventListener('click',e=>{e.stopPropagation();swapDot(dot,dot.dataset.pid,parseInt(dot.dataset.idx));});
+    });
+  });
+
+  document.querySelectorAll('.fade-up').forEach(el=>observer.observe(el));
+
+  // Pagination
+  if(totalPages<=1){pag.innerHTML='';return;}
+  let h=`<button class="pag-btn${page===1?' dis':''}" data-pg="${page-1}">←</button>`;
+  for(let i=1;i<=totalPages;i++){
+    if(i===1||i===totalPages||Math.abs(i-page)<=1)h+=`<button class="pag-btn${i===page?' act':''}" data-pg="${i}">${i}</button>`;
+    else if(Math.abs(i-page)===2)h+=`<span style="color:var(--muted);padding:0 4px">…</span>`;
+  }
+  h+=`<button class="pag-btn${page===totalPages?' dis':''}" data-pg="${page+1}">→</button>`;
+  pag.innerHTML=h;
+  pag.querySelectorAll('.pag-btn:not(.dis)').forEach(btn=>{
+    btn.addEventListener('click',()=>{page=parseInt(btn.dataset.pg);renderProducts();document.getElementById('products').scrollIntoView({behavior:'smooth'});});
+  });
+}
+
+function goPage(p){
+  const total=Math.ceil(getFiltered().length/PER);
+  if(p<1||p>total)return;
+  page=p;
+  renderProducts();
+  document.getElementById('products').scrollIntoView({behavior:'smooth'});
+}
+
+function swapDot(dot,pid,idx){
+  const p=products.find(p=>String(p.id)===String(pid));
+  if(!p)return;
+  const v=(Array.isArray(p.variants)?p.variants:[])[idx];
+  dot.closest('.vdots-row').querySelectorAll('.vdot').forEach(d=>d.classList.remove('active'));
+  dot.classList.add('active');
+  const img=document.getElementById(`pimg-${pid}`);
+  if(img)img.src=v?.image_url||p.image_url||'';
+}
+
+// ── FILTER ──
+function filterCat(c){
+  cat=c;sub=null;page=1;
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.toggle('active',t.dataset.cat===c));
+  renderSubTabs();
+  document.getElementById('products').scrollIntoView({behavior:'smooth'});
+  renderProducts();
+}
+
+function filterSub(c,s){
+  cat=c;sub=s;page=1;
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.toggle('active',t.dataset.cat===c));
+  renderSubTabs();
+  document.getElementById('products').scrollIntoView({behavior:'smooth'});
+  renderProducts();
+}
+
+function renderSubTabs(){
+  const subs=SUBS[cat];
+  const el=document.getElementById('filter-sub-row');
+  if(!subs){el.innerHTML='';return;}
+  el.innerHTML=subs.map(s=>`<button class="fstab${sub===s?' active':''}" data-sub="${s}">${s}</button>`).join('');
+  el.querySelectorAll('.fstab').forEach(btn=>btn.addEventListener('click',()=>filterSub(cat,btn.dataset.sub)));
+}
+
+// ── MODAL ──
+function openModal(pid){
+  const p=products.find(p=>p.id===pid);
+  if(!p)return;
+  curProd=p;selVariant=null;
+  db.from('products').update({view_count:(p.view_count||0)+1}).eq('id',p.id);
+
+  const vv=Array.isArray(p.variants)?p.variants:[];
+  const isNewP=isNew(p),isBest=p.badge?.toLowerCase()==='bestseller'||p._autoBest,isPop=(p.order_count||0)>=5;
+
+  document.getElementById('modal-badges').innerHTML=[
+    isNewP?'<span class="mbadge new">New</span>':'',isBest?'<span class="mbadge best">Bestseller</span>':'',
+    isPop&&!isBest?'<span class="mbadge pop">Popular</span>':'',
+    p.badge?.toLowerCase()==='sale'&&!isBest?'<span class="mbadge sale">Sale</span>':'',
+  ].join('');
+  document.getElementById('modal-cat').textContent=p.sub_category||p.category||'';
+  document.getElementById('modal-name').textContent=p.name||'';
+  const de=document.getElementById('modal-desc');
+  de.innerHTML=p.description?p.description.replace(/\n/g,'<br>'):'';
+  de.style.display=p.description?'block':'none';
+  setModalPrice(p,null);
+
+  // Gallery
+  const gallery=Array.isArray(p.gallery)?p.gallery:[];
+  galleryImgs=p.image_url?[p.image_url,...gallery.filter(g=>g!==p.image_url)]:gallery;
+  galIdx=0;
+  setupGallery();
+
+  // Variants
+  const vs=document.getElementById('modal-variants-section');
+  if(vv.length){
+    vs.style.display='block';
+    document.getElementById('modal-swatches').innerHTML=vv.map((v,i)=>
+      `<div class="swatch-btn" data-idx="${i}">
+        <div class="swatch-circle" style="background:${v.color||'#ccc'}"></div>
+        <span class="swatch-label">${v.name||'Variant '+(i+1)}</span>
+      </div>`).join('');
+    document.getElementById('modal-swatches').querySelectorAll('.swatch-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>selectVariant(parseInt(btn.dataset.idx)));
+    });
+  } else {vs.style.display='none';}
+
+  // Also like
+  const also=products.filter(ap=>ap.id!==p.id&&ap.category===p.category).slice(0,5);
+  const alsoEl=document.getElementById('modal-also');
+  if(also.length){
+    alsoEl.style.display='block';
+    document.getElementById('modal-also-row').innerHTML=also.map(ap=>
+      `<div class="also-item" data-pid="${ap.id}">
+        <div class="also-item-img">${ap.image_url?`<img src="${ap.image_url}" alt="${ap.name}">`:'✨'}</div>
+        <div class="also-item-name">${ap.name}</div>
+        <div class="also-item-price">৳${Number(ap.price||0).toLocaleString()}</div>
+      </div>`).join('');
+    document.getElementById('modal-also-row').querySelectorAll('.also-item').forEach(item=>{
+      item.addEventListener('click',()=>{closeModal();setTimeout(()=>openModal(parseInt(item.dataset.pid)),200);});
+    });
+  } else {alsoEl.style.display='none';}
+
+  updateModalOrderBtn();
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  // Push state so back button closes modal
+  history.pushState({modal:true,pid:pid},'','#product-'+pid);
+}
+
+function setModalPrice(p,v){
+  const price=v?.price||p.price||0;
+  const showOld=!v?.price&&p.original_price;
+  document.getElementById('modal-price').innerHTML=`৳${Number(price).toLocaleString()}${showOld?`<span class="modal-price-old">৳${Number(p.original_price).toLocaleString()}</span>`:''}`;
+}
+
+function selectVariant(idx){
+  const vv=Array.isArray(curProd.variants)?curProd.variants:[];
+  if(selVariant===vv[idx]){
+    selVariant=null;
+    document.querySelectorAll('.swatch-btn').forEach(b=>b.classList.remove('sel'));
+    setGalleryImage(curProd.image_url);
+    setModalPrice(curProd,null);
+  } else {
+    selVariant=vv[idx]||null;
+    document.querySelectorAll('.swatch-btn').forEach((b,i)=>b.classList.toggle('sel',i===idx));
+    setGalleryImage(selVariant?.image_url||curProd.image_url);
+    setModalPrice(curProd,selVariant);
+  }
+  updateModalOrderBtn();
+}
+
+function setGalleryImage(url){
+  const mw=document.getElementById('modal-media-wrap');
+  let img=mw.querySelector('img');
+  if(!url)return;
+  if(!img){img=document.createElement('img');img.className='modal-main-img';mw.insertBefore(img,mw.firstChild);}
+  img.style.opacity='0';
+  const ni=new Image();
+  ni.onload=()=>{img.src=url;img.style.opacity='1';};
+  ni.src=url;
+}
+
+function updateModalOrderBtn(){
+  const vi=selVariant?` - ${selVariant.name}`:'';
+  const price=selVariant?.price||curProd?.price||0;
+  const msg=encodeURIComponent(`Hi! I'm interested in: ${curProd.name}${vi} (৳${Number(price).toLocaleString()})`);
+  document.getElementById('modal-order-lnk').href=`https://m.me/florinae.official?text=${msg}`;
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow='';
+  curProd=null;selVariant=null;
+  // Go back if we pushed a state
+  if(history.state&&history.state.modal) history.back();
+}
+
+// Handle browser back button
+window.addEventListener('popstate',e=>{
+  // Close zoom
+  if(document.getElementById('zoom-overlay').classList.contains('open')){
+    document.getElementById('zoom-overlay').classList.remove('open');
+    return;
+  }
+  // Close modal
+  if(document.getElementById('modal-overlay').classList.contains('open')){
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.body.style.overflow='';
+    curProd=null;selVariant=null;
+    return;
+  }
+  // Close cart
+  if(document.getElementById('cart-drawer').classList.contains('open')){
+    document.getElementById('cart-drawer').classList.remove('open');
+    document.getElementById('cart-overlay').classList.remove('open');
+    document.getElementById('cart-drawer').style.transform='';
+    document.body.style.overflow='';
+  }
+});
+
+// ── GALLERY ──
+function setupGallery(){
+  const mw=document.getElementById('modal-media-wrap');
+  mw.querySelectorAll('img,video').forEach(el=>el.remove());
+  document.getElementById('modal-placeholder').style.display='none';
+  if(!galleryImgs.length){document.getElementById('modal-placeholder').style.display='flex';document.getElementById('gallery-thumbs').innerHTML='';document.getElementById('gallery-prev').style.display='none';document.getElementById('gallery-next').style.display='none';return;}
+  const img=document.createElement('img');
+  img.className='modal-main-img';img.src=galleryImgs[0];img.alt=curProd?.name||'';img.style.transition='opacity 0.2s';
+  mw.insertBefore(img,mw.firstChild);
+  const thumbs=document.getElementById('gallery-thumbs');
+  if(galleryImgs.length>1){
+    thumbs.innerHTML=galleryImgs.map((src,i)=>`<div class="gallery-thumb${i===0?' active':''}" data-idx="${i}"><img src="${src}" loading="lazy"></div>`).join('');
+    thumbs.querySelectorAll('.gallery-thumb').forEach(t=>t.addEventListener('click',e=>{e.stopPropagation();galGo(parseInt(t.dataset.idx));}));
+    document.getElementById('gallery-prev').style.display='flex';
+    document.getElementById('gallery-next').style.display='flex';
+  } else {
+    thumbs.innerHTML='';
+    document.getElementById('gallery-prev').style.display='none';
+    document.getElementById('gallery-next').style.display='none';
+  }
+}
+
+function galGo(idx){
+  if(!galleryImgs.length)return;
+  galIdx=((idx%galleryImgs.length)+galleryImgs.length)%galleryImgs.length;
+  const img=document.getElementById('modal-media-wrap').querySelector('img');
+  if(img){img.style.opacity='0';setTimeout(()=>{img.src=galleryImgs[galIdx];img.style.opacity='1';},150);}
+  document.querySelectorAll('.gallery-thumb').forEach((t,i)=>t.classList.toggle('active',i===galIdx));
+}
+
+// ── ZOOM ──
+function openZoom(e){
+  if(e)e.stopPropagation();
+  const src=galleryImgs[galIdx]||curProd?.image_url;
+  if(!src)return;
+  document.getElementById('zoom-img').src=src;
+  document.getElementById('zoom-img').style.transform='scale(1)';
+  document.getElementById('zoom-overlay').classList.add('open');
+  history.pushState({zoom:true},'','#zoom');
+}
+function closeZoom(){
+  document.getElementById('zoom-overlay').classList.remove('open');
+  if(history.state&&history.state.zoom) history.back();
+}
+
+// ── CART ──
+function addToCart(pid,vIdx,btn){
+  const p=products.find(p=>p.id===pid);
+  if(!p)return;
+  const vv=Array.isArray(p.variants)?p.variants:[];
+  const v=vIdx!==null&&vIdx!==undefined?vv[vIdx]:null;
+  const price=Number(v?.price||p.price||0);
+  const key=`${pid}-${vIdx}`;
+  const ex=cart.find(i=>i.key===key);
+  if(ex)ex.qty+=1;
+  else cart.push({key,pid,vIdx,name:p.name,variant:v?.name||null,price,image:v?.image_url||p.image_url||null,qty:1});
+  saveCart();renderCartUI();toggleCart(true);showToast('✓ Added to cart!');
+  if(btn){btn.textContent='✓ Added!';btn.classList.add('added');setTimeout(()=>{btn.textContent='+ Cart';btn.classList.remove('added');},2000);}
+}
+
+function addFromModal(){
+  if(!curProd)return;
+  const vv=Array.isArray(curProd.variants)?curProd.variants:[];
+  const vIdx=selVariant?vv.indexOf(selVariant):null;
+  addToCart(curProd.id,vIdx,null);
+  closeModal();
+}
+
+function updateQty(key,delta){
+  const item=cart.find(i=>i.key===key);
+  if(!item)return;
+  item.qty+=delta;
+  if(item.qty<=0)cart=cart.filter(i=>i.key!==key);
+  saveCart();renderCartUI();
+}
+
+function removeItem(key){cart=cart.filter(i=>i.key!==key);saveCart();renderCartUI();}
+function saveCart(){localStorage.setItem('florinae_cart',JSON.stringify(cart));}
+
+function renderCartUI(){
+  const totalQty=cart.reduce((s,i)=>s+i.qty,0);
+  const subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  ['cart-count','sn-badge'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.textContent=totalQty;el.classList.toggle('show',totalQty>0);}
+  });
+  const body=document.getElementById('cart-body');
+  const foot=document.getElementById('cart-foot');
+  if(!cart.length){
+    body.innerHTML='<div class="cart-empty-state"><span class="cart-empty-icon">🛍️</span>Your cart is empty!</div>';
+    foot.style.display='none';return;
+  }
+  body.innerHTML=cart.map(item=>`
+    <div class="cart-item">
+      <div class="cart-item-img">${item.image?`<img src="${item.image}" alt="${item.name}">`:'✨'}</div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.name}</div>
+        ${item.variant?`<div class="cart-item-variant">${item.variant}</div>`:''}
+        <div class="cart-item-price">৳${Number(item.price).toLocaleString()}</div>
+        <div class="qty-row">
+          <button class="qty-btn" data-key="${item.key}" data-delta="-1">−</button>
+          <span class="qty-num">${item.qty}</span>
+          <button class="qty-btn" data-key="${item.key}" data-delta="1">+</button>
+        </div>
+      </div>
+      <button class="cart-item-del" data-key="${item.key}">✕</button>
+    </div>`).join('');
+  body.querySelectorAll('.qty-btn').forEach(btn=>btn.addEventListener('click',()=>updateQty(btn.dataset.key,parseInt(btn.dataset.delta))));
+  body.querySelectorAll('.cart-item-del').forEach(btn=>btn.addEventListener('click',()=>removeItem(btn.dataset.key)));
+
+  // Bundle
+  const deal=bundleDeal;
+  const minItems=deal?deal.min_items:2;
+  const pct=deal?Number(deal.discount_percent):0;
+  let finalTotal=subtotal;
+  let bannerHtml='';
+  if(deal){
+    if(totalQty>=minItems){
+      const disc=Math.round(subtotal*(pct/100));
+      finalTotal=subtotal-disc;
+      bannerHtml=`<div class="bundle-banner applied"><span class="bundle-banner-icon">🎀</span><div class="bundle-banner-text"><strong>Bundle deal applied!</strong><span>You're saving ৳${disc.toLocaleString()} (${pct}% off)</span></div></div>`;
+    } else {
+      const need=minItems-totalQty;
+      bannerHtml=`<div class="bundle-banner pending"><span class="bundle-banner-icon">🎀</span><div class="bundle-banner-text"><strong>Add ${need} more item${need>1?'s':''} for ${pct}% off!</strong></div><a href="#products" class="bundle-shop-lnk" id="bundle-shop-lnk">Shop →</a></div>`;
+    }
+  }
+  document.getElementById('bundle-banner-wrap').innerHTML=bannerHtml;
+  if(document.getElementById('bundle-shop-lnk')){
+    document.getElementById('bundle-shop-lnk').addEventListener('click',()=>toggleCart(false));
+  }
+  document.getElementById('cart-total-amt').textContent='৳'+finalTotal.toLocaleString();
+  const lines=cart.map(i=>`• ${i.name}${i.variant?' ('+i.variant+')':''} x${i.qty} — ৳${(i.price*i.qty).toLocaleString()}`).join('\n');
+  const discLine=deal&&totalQty>=minItems?`\nBundle Discount (${pct}%): -৳${Math.round(subtotal*(pct/100)).toLocaleString()}`:'';
+  const msg=encodeURIComponent(`Hi! I'd like to order:\n${lines}${discLine}\nTotal: ৳${finalTotal.toLocaleString()}`);
+  document.getElementById('cart-order-btn').href=`https://m.me/florinae.official?text=${msg}`;
+  foot.style.display='block';
+}
+
+function toggleCart(force){
+  const d=document.getElementById('cart-drawer'),o=document.getElementById('cart-overlay');
+  const open=d.classList.contains('open');
+  const shouldOpen=force===true||(force===undefined&&!open);
+  if(shouldOpen){
+    d.classList.add('open');o.classList.add('open');document.body.style.overflow='hidden';
+    history.pushState({cart:true},'','#cart');
+  } else {
+    d.classList.remove('open');o.classList.remove('open');d.style.transform='';document.body.style.overflow='';
+    if(history.state&&history.state.cart) history.back();
+  }
+}
+
+// ── MESSENGER ──
+function msgProduct(pid){
+  const p=products.find(p=>p.id===pid);
+  if(!p)return;
+  db.from('products').update({order_count:(p.order_count||0)+1}).eq('id',p.id);
+  const msg=encodeURIComponent(`Hi! I'm interested in: ${p.name} (৳${Number(p.price||0).toLocaleString()})`);
+  window.open(`https://m.me/florinae.official?text=${msg}`,'_blank');
+}
+
+// ── TOAST ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// ── OCCASION ──
+function checkOccasion(){
+  const m=new Date().getMonth()+1,d=new Date().getDate();
+  const bar=document.getElementById('ann-bar'),track=document.getElementById('ann-track');
+  if((m===3&&d>=28)||(m===4&&d<=5)){
+    bar.classList.add('occasion');
+    track.innerHTML=['🌙 Eid Mubarak! Special Collection Now Available','Free Gift Wrapping on All Eid Orders','Celebrate in Style with Florinae','🌙 Eid Mubarak! Special Collection Now Available','Free Gift Wrapping on All Eid Orders','Celebrate in Style with Florinae'].map(t=>`<span class="ann-item">${t}</span>`).join('');
+  } else if(m===2&&d>=10&&d<=15){
+    bar.classList.add('occasion');
+    track.innerHTML=["💕 Valentine's Special Collection","Gift Your Love with Florinae","💕 Valentine's Special Collection","Gift Your Love with Florinae"].map(t=>`<span class="ann-item">${t}</span>`).join('');
+  }
+}
+
+// ── OBSERVER ──
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{if(e.isIntersecting)setTimeout(()=>e.target.classList.add('visible'),i*60);});
+},{threshold:0.1});
+document.querySelectorAll('.fade-up').forEach(el=>observer.observe(el));
+
+// ── MENU ──
+function toggleMenu(){
+  const links=document.querySelector('.nav-links');
+  const open=links.style.display==='flex';
+  links.style.cssText=open?'':'display:flex;flex-direction:column;position:fixed;top:56px;left:0;right:0;background:rgba(250,246,240,0.98);padding:2rem;gap:1.5rem;border-bottom:1px solid #e0d5c5;z-index:99';
+}
+
+init();
+</script>
+</body>
+</html>
